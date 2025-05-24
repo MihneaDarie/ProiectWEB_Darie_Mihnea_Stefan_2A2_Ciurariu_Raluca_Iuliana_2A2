@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(registerForm);
         formData.append('action', 'register');
 
-        const response = await fetch('/pig/Controllers/handler.php', {
+        const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/pig/Controllers/handler.php', {
             method: 'POST',
             body: formData
         });
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(loginForm);
         formData.append('action', 'login');
 
-        const response = await fetch('/pig/Controllers/handler.php', {
+        const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/pig/Controllers/handler.php', {
             method: 'POST',
             body: formData
         });

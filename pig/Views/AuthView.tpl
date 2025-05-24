@@ -1,51 +1,53 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="eng">
 <head>
     <meta charset="UTF-8" />
-    <title>Autentificare și Înregistrare</title>
+    <title>Register and login</title>
 </head>
 <body>
 
-<h2>Înregistrare</h2>
+<h2>Register</h2>
 <form id="registerForm">
-    <div><input type="text" name="username" placeholder="Nume utilizator"  autocomplete="username" required /></div>
+    <div>
+        <input type="text" name="username" placeholder="Username"  autocomplete="username" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
+    </div>
     
     <div>
-        <input type="password" id="firstPassword" name="password" placeholder="Parola" autocomplete="new-password" required />
+        <input type="password" id="firstPassword" name="password" placeholder="Password" autocomplete="new-password" required  oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
         <button type="button" data-show-password="firstPassword"> 👁️ </button>
     </div>
     
     <div>
-        <input type="password" id="secondPassword" name="copy_password" placeholder="Confirmare parola" autocomplete="new-password" required />
+        <input type="password" id="secondPassword" name="copy_password" placeholder="Confirm password" autocomplete="new-password" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
         <button type="button" data-show-password="secondPassword"> 👁️ </button>
     </div>
     
     <div>
-        <input type="email" name="email" placeholder="Email" autocomplete="email" required />
+        <input type="email" name="email" placeholder="Email" autocomplete="email" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
     </div>
 
-    <button type="submit">Înregistrează-te</button>
+    <button type="submit">Register</button>
 </form>
 <div id="registerMessage"></div>
 
 <hr>
 
-<h2>Autentificare</h2>
+<h2>Login</h2>
 <form id="loginForm">
     <div>
-        <input type="text" name="username" placeholder="Nume utilizator"  autocomplete="username" required />
+        <input type="text" name="username" placeholder="Username"  autocomplete="username" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
     </div>
 
     <div>
-        <input type="password" id="loginPassword" name="password" placeholder="Parola"  autocomplete="current-password"required />
+        <input type="password" id="loginPassword" name="password" placeholder="Password"  autocomplete="current-password"required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
         <button type="button" data-show-password="loginPassword"> 👁️ </button>
     </div>
 
-    <button type="submit">Autentificare</button>
+    <button type="submit">Login</button>
 </form>
 <div id="loginMessage"></div>
 
-<script src="/pig/auth.js" defer ></script>
+<script src="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/pig/auth.js" defer ></script>
 
 </body>
 </html>
