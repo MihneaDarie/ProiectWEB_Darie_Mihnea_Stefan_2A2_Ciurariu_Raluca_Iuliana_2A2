@@ -1,9 +1,14 @@
 <?php
+
+require_once __DIR__ . '/../../vendor/autoload.php';
+$env = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+$env->load();
+
 require_once __DIR__ . '/AuthController.php';
 
 header('Content-Type: application/json');
 
-$conn = oci_connect('student', 'STUDENT', 'localhost/XE');
+$conn = oci_connect($_ENV['DB_NAME'], $_ENV['DB_PASSWORD'], $_ENV['DB_CONNECTION_STRING']);
 if (!$conn) {
     echo json_encode(["success" => false, "message" => "Eroare la conectarea la baza de date!"]);
     exit;
