@@ -13,19 +13,16 @@ $action = $_POST['action'] ?? null;
 $username = $_POST['username'] ?? '';
 $password = $_POST['password'] ?? '';
 $copy_password = $_POST['copy_password'] ?? '';
-$email= $_POST['email'] ??'';
+$email = $_POST['email'] ?? '';
 
 $authController = new AuthController($conn);
+$response = ["success" => false, "message" => "Acțiune necunoscută"];
 
 if ($action === 'register') {
-    $result = $authController->register_user($username, $password, $copy_password,$email);
-    echo json_encode($result);
-    exit;
+    $response = $authController->register_user($username, $password, $copy_password, $email);
 } elseif ($action === 'login') {
-    $result = $authController->login_user($username, $password);
-    echo json_encode($result);
-    exit;
-} else {
-    echo json_encode(["success" => false, "message" => "Acțiune necunoscută"]);
-    exit;
+    $response = $authController->login_user($username, $password);
 }
+
+echo json_encode($response);
+exit;
