@@ -4,3 +4,26 @@
 
 .ini
 
+# Composer dependencies
+/vendor/
+
+# Environment configuration
+.env
+
+# IDE and editor files
+*.log
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# PHPUnit results
+.phpunit.result.cache
+coverage/
+
+# Cache
+/cache/
