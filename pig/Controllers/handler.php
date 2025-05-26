@@ -1,10 +1,10 @@
 <?php
-
 require_once __DIR__ . '/../../vendor/autoload.php';
 $env = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
 $env->load();
 
-require_once __DIR__ . '/AuthController.php';
+require_once __DIR__ . '/RegisterController.php';
+require_once __DIR__ . '/LoginController.php';
 
 header('Content-Type: application/json');
 
@@ -20,13 +20,14 @@ $password = $_POST['password'] ?? '';
 $copy_password = $_POST['copy_password'] ?? '';
 $email = $_POST['email'] ?? '';
 
-$authController = new AuthController($conn);
 $response = ["success" => false, "message" => "Acțiune necunoscută"];
 
 if ($action === 'register') {
-    $response = $authController->register_user($username, $password, $copy_password, $email);
+    $registerController = new RegisterController($conn);
+    $response = $registerController->register_user($username, $password, $copy_password, $email);
 } elseif ($action === 'login') {
-    $response = $authController->login_user($username, $password);
+    $loginController = new LoginController($conn);
+    $response = $loginController->login_user($username, $password);
 }
 
 echo json_encode($response);

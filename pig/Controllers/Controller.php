@@ -15,7 +15,7 @@ abstract class Controller {
 
    public function renderView($viewFile, $data = []){
     extract($data);
-    include __DIR__ . '/../Views/' . $viewFile;
+    include __DIR__ . '/../templates/' . $viewFile;
     }
 
 }
