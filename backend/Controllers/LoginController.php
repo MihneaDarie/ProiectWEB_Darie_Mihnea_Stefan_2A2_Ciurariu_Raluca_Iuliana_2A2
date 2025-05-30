@@ -11,7 +11,4 @@ class LoginController extends Controller {
         return $this->model->login($username,$password);
     }
 
-    public function design(){
-        $this->renderView('LoginView.tpl');
-    }
 }

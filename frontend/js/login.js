@@ -13,13 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         loginMessage.textContent = 'Se încarcă...';
 
-        const formData = new FormData(loginForm);
-        formData.append('action', 'login');
+        const payload = {
+            username: loginForm.username.value,
+            password: loginForm.password.value
+        };
 
-        const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/pig/Controllers/handler.php', {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch(
+            '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/Controllers/api.php/login',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }
+        );
 
         const data = await response.json();
         loginMessage.textContent = data.message;

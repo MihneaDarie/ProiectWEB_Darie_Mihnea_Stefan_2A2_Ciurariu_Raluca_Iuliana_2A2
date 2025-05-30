@@ -26,7 +26,7 @@
     <a href="index.php?page=register">Register here</a>
 </p>
 
-<script src="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/pig/js/login.js" defer></script>
+<script src="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/js/login.js" defer></script>
 
 </body>
 </html>

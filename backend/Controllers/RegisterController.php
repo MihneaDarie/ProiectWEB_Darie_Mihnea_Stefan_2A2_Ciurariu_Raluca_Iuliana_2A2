@@ -11,7 +11,4 @@ class RegisterController extends Controller{
         return $this->model->register($username,$password,$copy_password,$email);        
     }
 
-    public function design(){
-        $this->renderView('RegisterView.tpl');
-    }
 }

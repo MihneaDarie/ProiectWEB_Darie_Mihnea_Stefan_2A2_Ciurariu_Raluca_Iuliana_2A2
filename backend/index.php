@@ -7,8 +7,6 @@ $env->load();
 require_once __DIR__ . '/Controllers/LoginController.php';
 require_once __DIR__ . '/Controllers/RegisterController.php';
 
-
-
 $conn = oci_connect($_ENV['DB_NAME'], $_ENV['DB_PASSWORD'], $_ENV['DB_CONNECTION_STRING']);
 if (!$conn) {
     die("Eroare la conectarea la baza de date!");
@@ -16,10 +14,17 @@ if (!$conn) {
 
 $page = $_GET['page'] ?? 'login';
 
+function renderTemplate($template) {
+    $templatePath = __DIR__ . '/../frontend/templates/' . $template;
+    if (file_exists($templatePath)) {
+        readfile($templatePath);
+    } else {
+        echo "Template not found!";
+    }
+}
+
 if ($page === 'register') {
-    $controller = new RegisterController($conn);
-    $controller->design();
+    renderTemplate('RegisterView.tpl');
 } else {
-    $controller = new LoginController($conn);
-    $controller->design();
+    renderTemplate('LoginView.tpl');
 }
