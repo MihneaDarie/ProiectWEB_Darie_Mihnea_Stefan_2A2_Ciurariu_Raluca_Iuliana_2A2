@@ -94,6 +94,627 @@ create table graph(
     CONSTRAINT fk_graph_id_data_set FOREIGN KEY (id) REFERENCES data_set(id)
 )
 /
+CREATE OR REPLACE FUNCTION is_valid_adjacency_list(
+    p_data        CLOB,
+    p_nodes       INTEGER,
+    p_is_digraph  CHAR DEFAULT 'y',
+    p_is_weighted CHAR DEFAULT 'n'
+) RETURN CHAR IS
+    c_yes         CONSTANT CHAR := 'y';
+    c_no          CONSTANT CHAR := 'n';
+    
+    v_source      VARCHAR2(32767);
+    v_node_str    VARCHAR2(4000);
+    v_neighbor_str VARCHAR2(1000);
+    v_node_max    NUMBER := p_nodes - 1;
+    v_has_weights BOOLEAN := (p_is_weighted = c_yes);
+    v_is_digraph  BOOLEAN := (p_is_digraph = c_yes);
+    v_step        VARCHAR2(100);
+    v_node_count  NUMBER;
+    v_current_node NUMBER := 0;
+    
+    v_neighbor_node NUMBER;
+    v_weight        NUMBER;
+    v_comma_pos     NUMBER;
+    v_part1         VARCHAR2(100);
+    v_part2         VARCHAR2(100);
+    v_neighbor_count NUMBER;
+    
+    TYPE t_edge_map IS TABLE OF NUMBER INDEX BY VARCHAR2(100);
+    v_edges t_edge_map;
+    v_edge_key VARCHAR2(100);
+    v_reverse_key VARCHAR2(100);
+    
+BEGIN
+    v_step := 'Initial parameter validation';
+    
+    IF p_data IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20100, 'VALIDATION_ERROR: Step=' || v_step || ' - p_data is NULL');
+    END IF;
+    
+    IF p_nodes IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20101, 'VALIDATION_ERROR: Step=' || v_step || ' - p_nodes is NULL');
+    END IF;
+    
+    IF p_nodes <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20102, 'VALIDATION_ERROR: Step=' || v_step || ' - p_nodes must be > 0, got: ' || p_nodes);
+    END IF;
+    
+    IF p_is_digraph NOT IN (c_yes, c_no) THEN
+        RAISE_APPLICATION_ERROR(-20103, 'VALIDATION_ERROR: Step=' || v_step || ' - p_is_digraph must be y or n, got: ' || p_is_digraph);
+    END IF;
+    
+    IF p_is_weighted NOT IN (c_yes, c_no) THEN
+        RAISE_APPLICATION_ERROR(-20104, 'VALIDATION_ERROR: Step=' || v_step || ' - p_is_weighted must be y or n, got: ' || p_is_weighted);
+    END IF;
+    
+    BEGIN
+        v_source := DBMS_LOB.SUBSTR(p_data, 32767, 1);
+        v_source := REGEXP_REPLACE(v_source, '[[:space:]]+', '');
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20105, 'VALIDATION_ERROR: Step=' || v_step || ' - Failed to process CLOB data: ' || SQLERRM);
+    END;
+    
+    v_step := 'Format validation';
+    
+    IF NOT REGEXP_LIKE(v_source, '^\[.*\]$') THEN
+        RAISE_APPLICATION_ERROR(-20106, 'VALIDATION_ERROR: Step=' || v_step || ' - Data must be in format [...] but got: ' || SUBSTR(v_source, 1, 100));
+    END IF;
+
+    v_step := 'Node extraction and processing';
+    
+    v_source := SUBSTR(v_source, 2, LENGTH(v_source) - 2);
+    
+    v_node_count := 0;
+    DECLARE
+        v_bracket_count NUMBER := 0;
+        v_char CHAR(1);
+    BEGIN
+        FOR i IN 1..LENGTH(v_source) LOOP
+            v_char := SUBSTR(v_source, i, 1);
+            IF v_char = '[' THEN
+                v_bracket_count := v_bracket_count + 1;
+                IF v_bracket_count = 1 THEN
+                    v_node_count := v_node_count + 1;
+                END IF;
+            ELSIF v_char = ']' THEN
+                v_bracket_count := v_bracket_count - 1;
+            END IF;
+        END LOOP;
+    END;
+    
+    IF v_node_count != p_nodes THEN
+        RAISE_APPLICATION_ERROR(-20107, 'VALIDATION_ERROR: Step=' || v_step || ' - Expected ' || p_nodes || ' nodes but found ' || v_node_count);
+    END IF;
+    
+    DECLARE
+        v_pos NUMBER := 1;
+        v_start_pos NUMBER;
+        v_end_pos NUMBER;
+        v_bracket_count NUMBER;
+    BEGIN
+        FOR node_idx IN 0..p_nodes-1 LOOP
+            v_current_node := node_idx;
+            v_step := 'Processing node ' || node_idx || ' of ' || (p_nodes-1);
+            
+            WHILE v_pos <= LENGTH(v_source) AND SUBSTR(v_source, v_pos, 1) != '[' LOOP
+                v_pos := v_pos + 1;
+            END LOOP;
+            
+            IF v_pos > LENGTH(v_source) THEN
+                RAISE_APPLICATION_ERROR(-20108, 'VALIDATION_ERROR: Step=' || v_step || ' - Could not find adjacency list for node ' || node_idx);
+            END IF;
+            
+            v_start_pos := v_pos + 1;
+            v_bracket_count := 1;
+            v_pos := v_pos + 1;
+            
+            WHILE v_pos <= LENGTH(v_source) AND v_bracket_count > 0 LOOP
+                IF SUBSTR(v_source, v_pos, 1) = '[' THEN
+                    v_bracket_count := v_bracket_count + 1;
+                ELSIF SUBSTR(v_source, v_pos, 1) = ']' THEN
+                    v_bracket_count := v_bracket_count - 1;
+                END IF;
+                v_pos := v_pos + 1;
+            END LOOP;
+            
+            v_end_pos := v_pos - 2;
+            
+            IF v_end_pos >= v_start_pos THEN
+                v_node_str := SUBSTR(v_source, v_start_pos, v_end_pos - v_start_pos + 1);
+            ELSE
+                v_node_str := '';
+            END IF;
+            
+            IF LENGTH(v_node_str) > 0 THEN
+                IF v_has_weights THEN
+                    v_neighbor_count := REGEXP_COUNT(v_node_str, '\[') ;
+                    
+                    FOR i IN 1..v_neighbor_count LOOP
+                        v_neighbor_str := REGEXP_SUBSTR(v_node_str, '\[[^\]]+\]', 1, i);
+                        v_neighbor_str := REPLACE(REPLACE(v_neighbor_str, '[', ''), ']', '');
+                        
+                        v_comma_pos := INSTR(v_neighbor_str, ',');
+                        IF v_comma_pos = 0 THEN
+                            RAISE_APPLICATION_ERROR(-20109, 'VALIDATION_ERROR: Step=' || v_step || ' - Weighted neighbor must have format [node,weight]: ' || v_neighbor_str);
+                        END IF;
+                        
+                        v_part1 := TRIM(SUBSTR(v_neighbor_str, 1, v_comma_pos - 1));
+                        v_part2 := TRIM(SUBSTR(v_neighbor_str, v_comma_pos + 1));
+                        
+                        BEGIN
+                            v_neighbor_node := TO_NUMBER(v_part1);
+                        EXCEPTION
+                            WHEN VALUE_ERROR THEN
+                                RAISE_APPLICATION_ERROR(-20110, 'VALIDATION_ERROR: Step=' || v_step || ' - Invalid neighbor node: ' || v_part1);
+                        END;
+                        
+                        BEGIN
+                            v_weight := TO_NUMBER(v_part2);
+                            IF v_weight < 0 THEN
+                                RAISE_APPLICATION_ERROR(-20111, 'VALIDATION_ERROR: Step=' || v_step || ' - Weight must be >= 0, got: ' || v_weight);
+                            END IF;
+                        EXCEPTION
+                            WHEN VALUE_ERROR THEN
+                                RAISE_APPLICATION_ERROR(-20112, 'VALIDATION_ERROR: Step=' || v_step || ' - Invalid weight: ' || v_part2);
+                        END;
+                        
+                        IF v_neighbor_node < 0 OR v_neighbor_node > v_node_max THEN
+                            RAISE_APPLICATION_ERROR(-20113, 'VALIDATION_ERROR: Step=' || v_step || ' - Neighbor node ' || v_neighbor_node || ' out of range [0,' || v_node_max || ']');
+                        END IF;
+                        
+                        IF NOT v_is_digraph THEN
+                            v_edge_key := node_idx || ',' || v_neighbor_node;
+                            v_edges(v_edge_key) := v_weight;
+                        END IF;
+                    END LOOP;
+                ELSE
+                    v_neighbor_count := REGEXP_COUNT(v_node_str, ',') + 1;
+                    IF TRIM(v_node_str) = '' THEN
+                        v_neighbor_count := 0;
+                    END IF;
+                    
+                    FOR i IN 1..v_neighbor_count LOOP
+                        v_neighbor_str := TRIM(REGEXP_SUBSTR(v_node_str, '[^,]+', 1, i));
+                        
+                        BEGIN
+                            v_neighbor_node := TO_NUMBER(v_neighbor_str);
+                        EXCEPTION
+                            WHEN VALUE_ERROR THEN
+                                RAISE_APPLICATION_ERROR(-20114, 'VALIDATION_ERROR: Step=' || v_step || ' - Invalid neighbor node: ' || v_neighbor_str);
+                        END;
+                        
+                        IF v_neighbor_node < 0 OR v_neighbor_node > v_node_max THEN
+                            RAISE_APPLICATION_ERROR(-20115, 'VALIDATION_ERROR: Step=' || v_step || ' - Neighbor node ' || v_neighbor_node || ' out of range [0,' || v_node_max || ']');
+                        END IF;
+                        
+                        IF NOT v_is_digraph THEN
+                            v_edge_key := node_idx || ',' || v_neighbor_node;
+                            v_edges(v_edge_key) := 1; 
+                        END IF;
+                    END LOOP;
+                END IF;
+            END IF;
+        END LOOP;
+    END;
+    
+    IF NOT v_is_digraph THEN
+        v_step := 'Undirected graph symmetry validation';
+        
+        v_edge_key := v_edges.FIRST;
+        WHILE v_edge_key IS NOT NULL LOOP
+            v_comma_pos := INSTR(v_edge_key, ',');
+            v_reverse_key := SUBSTR(v_edge_key, v_comma_pos + 1) || ',' || SUBSTR(v_edge_key, 1, v_comma_pos - 1);
+            
+            IF NOT v_edges.EXISTS(v_reverse_key) THEN
+                RAISE_APPLICATION_ERROR(-20116, 'VALIDATION_ERROR: Step=' || v_step || ' - Missing reverse edge for undirected graph: ' || v_reverse_key || ' (found: ' || v_edge_key || ')');
+            END IF;
+            
+            IF v_has_weights AND v_edges(v_edge_key) != v_edges(v_reverse_key) THEN
+                RAISE_APPLICATION_ERROR(-20117, 'VALIDATION_ERROR: Step=' || v_step || ' - Weight mismatch in undirected graph: ' || v_edge_key || '=' || v_edges(v_edge_key) || ' vs ' || v_reverse_key || '=' || v_edges(v_reverse_key));
+            END IF;
+            
+            v_edge_key := v_edges.NEXT(v_edge_key);
+        END LOOP;
+    END IF;
+    
+    v_step := 'Validation complete';
+    RETURN c_yes;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE BETWEEN -20199 AND -20100 THEN
+            RAISE;
+        ELSE
+            RAISE_APPLICATION_ERROR(-20199, 'VALIDATION_ERROR: Step=' || v_step || ' - Unexpected system error: ' || SQLERRM);
+        END IF;
+END is_valid_adjacency_list;
+/
+create or replace TRIGGER valid_adjacency_list_g
+BEFORE INSERT OR UPDATE ON graph
+FOR EACH ROW
+WHEN(NEW.representation = 'adjacency_list')
+DECLARE
+    v_is_valid CHAR(1);
+BEGIN
+    v_is_valid := is_valid_adjacency_list(
+        :NEW.data,
+        :NEW.nodes,
+        :NEW.is_digraph,
+        :NEW.is_weighted
+    );
+
+    IF v_is_valid = 'n' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency list !');
+    END IF;
+END;
+/
+create or replace FUNCTION is_valid_edge_list(
+    p_data        CLOB,
+    p_nodes       INTEGER,
+    p_is_digraph  CHAR DEFAULT 'y',
+    p_is_weighted CHAR DEFAULT 'n'
+) RETURN CHAR IS
+    c_yes         CONSTANT CHAR := 'y';
+    c_no          CONSTANT CHAR := 'n';
+
+    v_source      VARCHAR2(32767);
+    v_edge_str    VARCHAR2(1000);
+    v_node_max    NUMBER := p_nodes - 1;
+    v_has_weights BOOLEAN := (p_is_weighted = c_yes);
+    v_seen_edges  VARCHAR2(4000) := '';
+    v_step        VARCHAR2(100);
+    v_edge_count  NUMBER;
+    v_current_edge NUMBER := 0;
+
+    v_source_node NUMBER;
+    v_target_node NUMBER;
+    v_weight      NUMBER;
+    v_comma_pos1  NUMBER;
+    v_comma_pos2  NUMBER;
+    v_part1       VARCHAR2(100);
+    v_part2       VARCHAR2(100);
+    v_part3       VARCHAR2(100);
+
+BEGIN
+    v_step := 'Initial parameter validation';
+
+    IF p_data IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20100, 'VALIDATION_ERROR: Step=' || v_step || ' - p_data is NULL');
+    END IF;
+
+    IF p_nodes IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20101, 'VALIDATION_ERROR: Step=' || v_step || ' - p_nodes is NULL');
+    END IF;
+
+    IF p_nodes <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20102, 'VALIDATION_ERROR: Step=' || v_step || ' - p_nodes must be > 0, got: ' || p_nodes);
+    END IF;
+
+    IF p_is_digraph NOT IN (c_yes, c_no) THEN
+        RAISE_APPLICATION_ERROR(-20103, 'VALIDATION_ERROR: Step=' || v_step || ' - p_is_digraph must be y or n, got: ' || p_is_digraph);
+    END IF;
+
+    IF p_is_weighted NOT IN (c_yes, c_no) THEN
+        RAISE_APPLICATION_ERROR(-20104, 'VALIDATION_ERROR: Step=' || v_step || ' - p_is_weighted must be y or n, got: ' || p_is_weighted);
+    END IF;
+
+    BEGIN
+        v_source := DBMS_LOB.SUBSTR(p_data, 32767, 1);
+
+        v_source := REGEXP_REPLACE(v_source, '[[:space:]]+', '');
+
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20105, 'VALIDATION_ERROR: Step=' || v_step || ' - Failed to process CLOB data: ' || SQLERRM);
+    END;
+
+    v_step := 'Format validation';
+
+    IF NOT REGEXP_LIKE(v_source, '^\[\[.*\]\]$') THEN
+        RAISE_APPLICATION_ERROR(-20106, 'VALIDATION_ERROR: Step=' || v_step || ' - Data must be in format [[...]] but got: ' || SUBSTR(v_source, 1, 100));
+    END IF;
+
+    v_step := 'Edge extraction and processing';
+
+    v_source := SUBSTR(v_source, 2, LENGTH(v_source) - 2);
+
+    v_source := REPLACE(v_source, '],[', '|');
+    v_source := REPLACE(v_source, '[', '');
+    v_source := REPLACE(v_source, ']', '');
+
+
+    v_edge_count := REGEXP_COUNT(v_source, '\|') + 1;
+
+    FOR i IN 1..v_edge_count LOOP
+        v_current_edge := i;
+        v_step := 'Processing edge ' || i || ' of ' || v_edge_count;
+
+        BEGIN
+            v_edge_str := REGEXP_SUBSTR(v_source, '[^|]+', 1, i);
+
+            IF v_edge_str IS NULL THEN
+                RAISE_APPLICATION_ERROR(-20108, 'VALIDATION_ERROR: Step=' || v_step || ' - Could not extract edge ' || i || ' from: ' || v_source);
+            END IF;
+
+
+            v_comma_pos1 := INSTR(v_edge_str, ',', 1, 1);
+            v_comma_pos2 := INSTR(v_edge_str, ',', 1, 2);
+
+            IF v_comma_pos1 = 0 THEN
+                RAISE_APPLICATION_ERROR(-20109, 'VALIDATION_ERROR: Step=' || v_step || ' - No comma found in edge: ' || v_edge_str);
+            END IF;
+
+            v_part1 := TRIM(SUBSTR(v_edge_str, 1, v_comma_pos1 - 1));
+
+            IF v_comma_pos2 > 0 THEN
+                v_part2 := TRIM(SUBSTR(v_edge_str, v_comma_pos1 + 1, v_comma_pos2 - v_comma_pos1 - 1));
+                v_part3 := TRIM(SUBSTR(v_edge_str, v_comma_pos2 + 1));
+            ELSE
+                v_part2 := TRIM(SUBSTR(v_edge_str, v_comma_pos1 + 1));
+                v_part3 := NULL;
+            END IF;
+
+            IF v_has_weights AND v_part3 IS NULL THEN
+                RAISE_APPLICATION_ERROR(-20110, 'VALIDATION_ERROR: Step=' || v_step || ' - Weighted edge must have 3 parts but only found 2 in: ' || v_edge_str);
+            END IF;
+
+            IF NOT v_has_weights AND v_part3 IS NOT NULL THEN
+                RAISE_APPLICATION_ERROR(-20111, 'VALIDATION_ERROR: Step=' || v_step || ' - Unweighted edge must have 2 parts but found 3 in: ' || v_edge_str);
+            END IF;
+
+            BEGIN
+                v_source_node := TO_NUMBER(v_part1);
+            EXCEPTION
+                WHEN VALUE_ERROR THEN
+                    RAISE_APPLICATION_ERROR(-20112, 'VALIDATION_ERROR: Step=' || v_step || ' - Invalid source node: ' || v_part1);
+            END;
+
+            BEGIN
+                v_target_node := TO_NUMBER(v_part2);
+            EXCEPTION
+                WHEN VALUE_ERROR THEN
+                    RAISE_APPLICATION_ERROR(-20113, 'VALIDATION_ERROR: Step=' || v_step || ' - Invalid target node: ' || v_part2);
+            END;
+
+            IF v_source_node < 0 OR v_source_node > v_node_max THEN
+                RAISE_APPLICATION_ERROR(-20114, 'VALIDATION_ERROR: Step=' || v_step || ' - Source node ' || v_source_node || ' out of range [0,' || v_node_max || ']');
+            END IF;
+
+            IF v_target_node < 0 OR v_target_node > v_node_max THEN
+                RAISE_APPLICATION_ERROR(-20115, 'VALIDATION_ERROR: Step=' || v_step || ' - Target node ' || v_target_node || ' out of range [0,' || v_node_max || ']');
+            END IF;
+
+            IF v_has_weights THEN
+                BEGIN
+                    v_weight := TO_NUMBER(v_part3);
+
+                    IF v_weight < 0 THEN
+                        RAISE_APPLICATION_ERROR(-20116, 'VALIDATION_ERROR: Step=' || v_step || ' - Weight must be >= 0, got: ' || v_weight);
+                    END IF;
+                EXCEPTION
+                    WHEN VALUE_ERROR THEN
+                        RAISE_APPLICATION_ERROR(-20117, 'VALIDATION_ERROR: Step=' || v_step || ' - Invalid weight: ' || v_part3);
+                END;
+            ELSE
+                v_weight := 1;
+            END IF;
+
+            IF INSTR(v_seen_edges, v_source_node || ',' || v_target_node || ';') > 0 THEN
+                RAISE_APPLICATION_ERROR(-20118, 'VALIDATION_ERROR: Step=' || v_step || ' - Duplicate edge found: [' || 
+                    v_source_node || ',' || v_target_node || ']');
+            END IF;
+
+            v_seen_edges := v_seen_edges || v_source_node || ',' || v_target_node || ';';
+
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE BETWEEN -20199 AND -20100 THEN
+                    RAISE;
+                ELSE
+                    RAISE_APPLICATION_ERROR(-20119, 'VALIDATION_ERROR: Step=' || v_step || ' - Unexpected error: ' || SQLERRM);
+                END IF;
+        END;
+    END LOOP;
+
+    v_step := 'Undirected graph symmetry validation';
+
+
+    v_step := 'Validation complete';
+
+    RETURN c_yes;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE BETWEEN -20199 AND -20100 THEN
+            RAISE;
+        ELSE
+            RAISE_APPLICATION_ERROR(-20199, 'VALIDATION_ERROR: Step=' || v_step || ' - Unexpected system error: ' || SQLERRM);
+        END IF;
+END is_valid_edge_list;
+/
+create or replace TRIGGER valid_edge_list_g
+BEFORE INSERT OR UPDATE ON graph
+FOR EACH ROW
+WHEN(NEW.representation = 'edge_list')
+DECLARE
+    v_is_valid CHAR(1);
+BEGIN
+    v_is_valid := is_valid_edge_list(
+        :NEW.data,
+        :NEW.nodes,
+        :NEW.is_digraph,
+        :NEW.is_weighted
+    );
+
+    IF v_is_valid = 'n' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid edge list !');
+    END IF;
+END;
+/
+create or replace FUNCTION is_valid_adjacency_matrix (
+   p_data        CLOB,
+   p_nodes       PLS_INTEGER,
+   p_is_digraph  CHAR,
+   p_is_weighted CHAR
+)
+   RETURN CHAR
+IS
+   TYPE matrix_row  IS TABLE OF NUMBER;
+   TYPE matrix_type IS TABLE OF matrix_row;
+   v_matrix  matrix_type := matrix_type();
+   v_source   VARCHAR2 (32767);
+   v_row_txt  VARCHAR2 (32767);
+   v_value    NUMBER;
+   c_yes  CHAR(1) := 'y';
+   c_no   CHAR(1) := 'n';
+
+   v_error_msg   VARCHAR2(4000);
+   v_error_code  NUMBER;
+   v_context     VARCHAR2(500);
+
+BEGIN
+   IF p_data IS NULL
+      OR p_nodes IS NULL
+      OR p_nodes <= 0
+      OR p_is_digraph NOT IN (c_yes,c_no)
+      OR p_is_weighted NOT IN (c_yes,c_no)
+   THEN
+      RETURN c_no;
+   END IF;
+
+   BEGIN
+      v_context := 'Data preprocessing - CLOB substring extraction';
+      v_source := DBMS_LOB.SUBSTR(p_data, 32767, 1);
+
+      v_context := 'Data preprocessing - String replacements';
+      v_source := REPLACE (v_source, '[[',  '');
+      v_source := REPLACE (v_source, ']]',  '');
+      v_source := REPLACE (v_source, '],[', '|');
+   EXCEPTION
+      WHEN VALUE_ERROR THEN
+         RAISE_APPLICATION_ERROR(-20001, 'Invalid CLOB data or string operation in ' || v_context);
+      WHEN OTHERS THEN
+         v_error_code := SQLCODE;
+         v_error_msg := SQLERRM;
+         RAISE_APPLICATION_ERROR(-20001, 'Data preprocessing error in ' || v_context || ': ' || v_error_code || ' - ' || v_error_msg);
+   END;
+
+   BEGIN
+      v_context := 'Matrix initialization - Extending main collection';
+      v_matrix.EXTEND (p_nodes);
+
+      FOR i IN 1 .. p_nodes LOOP
+         v_context := 'Row extraction - Processing row ' || i;
+         v_row_txt := REGEXP_SUBSTR (v_source, '[^|]+', 1, i);
+
+         IF v_row_txt IS NULL THEN
+            RAISE_APPLICATION_ERROR(-20009, 
+               'Row ' || i || ' is NULL or missing in matrix data');
+         END IF;
+
+         v_context := 'Matrix row initialization - Row ' || i;
+         v_matrix(i) := matrix_row();
+         v_matrix(i).EXTEND (p_nodes);
+
+         FOR j IN 1 .. p_nodes LOOP
+            BEGIN
+               v_context := 'Value extraction and conversion - Row ' || i || ', Column ' || j;
+               v_value := TO_NUMBER (
+                           REGEXP_SUBSTR (v_row_txt, '[^,]+', 1, j), '99999');
+
+               IF v_value < 0 THEN
+                  RAISE_APPLICATION_ERROR(-20004, 'Negative value found at position [' || i || '][' || j || ']: ' || v_value);
+               END IF;
+
+               IF p_is_weighted = c_no AND v_value NOT IN (0,1) THEN
+                  RAISE_APPLICATION_ERROR(-20005, 'Non-binary value in unweighted graph at position [' || i || '][' || j || ']: ' || v_value);
+               END IF;
+
+               IF i = j AND v_value <> 0 THEN
+                  RAISE_APPLICATION_ERROR(-20006, 'Self-loop detected at diagonal position [' || i || '][' || j || ']: ' || v_value);
+               END IF;
+
+               v_matrix(i)(j) := v_value;
+
+            EXCEPTION
+               WHEN VALUE_ERROR THEN
+                  RAISE_APPLICATION_ERROR(-20003, 'Invalid number format at position [' || i || '][' || j || '] in ' || v_context);
+               WHEN INVALID_NUMBER THEN
+                  RAISE_APPLICATION_ERROR(-20003, 'Cannot convert to number at position [' || i || '][' || j || '] in ' || v_context);
+            END;
+         END LOOP;
+      END LOOP;
+
+   EXCEPTION
+      WHEN SUBSCRIPT_OUTSIDE_LIMIT THEN
+         RAISE_APPLICATION_ERROR(-20007, 'Array index out of bounds in ' || v_context);
+      WHEN SUBSCRIPT_BEYOND_COUNT THEN
+         RAISE_APPLICATION_ERROR(-20007, 'Array not properly extended in ' || v_context);
+      WHEN COLLECTION_IS_NULL THEN
+         RAISE_APPLICATION_ERROR(-20010, 'Collection not initialized in ' || v_context);
+      WHEN OTHERS THEN
+         v_error_code := SQLCODE;
+         v_error_msg := SQLERRM;
+         RAISE_APPLICATION_ERROR(-20002, 'Matrix processing error in ' || v_context || ': ' || v_error_code || ' - ' || v_error_msg);
+   END;
+
+   IF p_is_digraph = c_no THEN
+      BEGIN
+         v_context := 'Symmetry validation for undirected graph';
+         FOR i IN 1 .. p_nodes LOOP
+            FOR j IN 1 .. p_nodes LOOP
+               IF v_matrix(i)(j) <> v_matrix(j)(i) THEN
+                  RAISE_APPLICATION_ERROR(-20008, 'Asymmetric matrix detected - Element[' || i || '][' || j || '] = ' || v_matrix(i)(j) || ' != Element[' || j || '][' || i || '] = ' || v_matrix(j)(i));
+               END IF;
+            END LOOP;
+         END LOOP;
+      EXCEPTION
+         WHEN SUBSCRIPT_OUTSIDE_LIMIT THEN
+            RAISE_APPLICATION_ERROR(-20007, 'Array index out of bounds during symmetry check in ' || v_context);
+         WHEN OTHERS THEN
+            v_error_code := SQLCODE;
+            v_error_msg := SQLERRM;
+            RAISE_APPLICATION_ERROR(-20008, 'Symmetry validation error in ' || v_context || ': ' || v_error_code || ' - ' || v_error_msg);
+      END;
+   END IF;
+
+   RETURN c_yes;
+
+EXCEPTION
+   WHEN OTHERS THEN
+      v_error_code := SQLCODE;
+      v_error_msg := SQLERRM;
+
+      IF v_error_code BETWEEN -20999 AND -20001 THEN
+         RAISE;
+      ELSE
+
+         RAISE_APPLICATION_ERROR(-20000, 'Unexpected error in is_valid_adjacency_matrix' || CASE WHEN v_context IS NOT NULL THEN ' (Context: ' || v_context || ')' END || ': ' || v_error_code || ' - ' || v_error_msg);
+      END IF;
+END is_valid_adjacency_matrix;
+/
+create or replace TRIGGER valid_adjacency_matrix_g
+BEFORE INSERT OR UPDATE ON graph
+FOR EACH ROW
+WHEN (NEW.representation = 'adjacency_matrix')
+DECLARE
+    v_is_valid CHAR(1);
+BEGIN
+    v_is_valid := is_valid_adjacency_matrix(
+        :NEW.data,
+        :NEW.nodes,
+        :NEW.is_digraph,
+        :NEW.is_weighted
+    );
+
+    IF v_is_valid = 'n' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency matrix !');
+    END IF;
+END;
+/
+
 create table tree(
     id INTEGER NOT NULL PRIMARY KEY,
     nodes INTEGER,
@@ -104,6 +725,83 @@ create table tree(
     data CLOB,
     CONSTRAINT fk_tree_id_data_set FOREIGN KEY (id) REFERENCES data_set(id)
 )
+/
+create or replace TRIGGER valid_adjacency_list_t
+BEFORE INSERT OR UPDATE ON tree
+FOR EACH ROW
+WHEN (NEW.representation = 'adjacency_list')
+DECLARE
+    v_is_valid CHAR(1);
+BEGIN
+    v_is_valid := is_valid_adjacency_list(
+        :NEW.data,
+        :NEW.nodes,
+        'n',
+        :NEW.is_weighted
+    );
+
+    IF v_is_valid = 'n' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency list !');
+    END IF;
+END;
+/
+create or replace TRIGGER valid_adjacency_matrix_t
+BEFORE INSERT OR UPDATE ON tree
+FOR EACH ROW
+WHEN (NEW.representation = 'adjacency_matrix')
+DECLARE
+    v_is_valid CHAR(1);
+BEGIN
+    v_is_valid := is_valid_adjacency_matrix(
+        :NEW.data,
+        :NEW.nodes,
+        'n',
+        :NEW.is_weighted
+    );
+
+    IF v_is_valid = 'n' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency matrix !');
+    END IF;
+END;
+/
+create or replace TRIGGER valid_edge_list_t
+BEFORE INSERT OR UPDATE ON tree
+FOR EACH ROW
+WHEN (NEW.representation = 'edge_list')
+DECLARE
+    v_is_valid CHAR(1);
+BEGIN
+    v_is_valid := is_valid_edge_list(
+        :NEW.data,
+        :NEW.nodes,
+        'n',
+        :NEW.is_weighted
+    );
+
+    IF v_is_valid = 'n' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid edge list !');
+    END IF;
+END;
+
+--statistics--
+  CREATE OR REPLACE FORCE VIEW "STUDENT"."USER_DATA_DISTRIBUTION" ("USER_ID", "USERNAME", "TYPE", "TYPE_COUNT", "PERCENTAGE") AS 
+  SELECT 
+    u.id AS user_id,
+    u.username,
+    d.type,
+    COUNT(*) AS type_count,
+    ROUND(COUNT(*) * 100.0 / NULLIF((
+        SELECT COUNT(*) FROM data_set ds WHERE ds.user_id = u.id
+    ), 0), 2) AS percentage
+FROM 
+    users u
+JOIN 
+    data_set d ON u.id = d.user_id
+GROUP BY 
+    u.id, u.username, d.type
+ORDER BY u.id
+
+
 /
 INSERT INTO users (username, password, email, created_at) VALUES ('mihnea', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'mihnea@example.com', SYSTIMESTAMP)
 /
@@ -150,6 +848,4 @@ select * from matrix;
 select * from graph;
 
 select * from tree;
-
-
 
