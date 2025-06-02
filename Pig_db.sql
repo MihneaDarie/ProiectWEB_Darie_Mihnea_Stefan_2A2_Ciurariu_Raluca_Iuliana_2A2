@@ -88,7 +88,6 @@ create table graph(
     edges INTEGER,
     is_digraph CHAR(1) DEFAULT 'n' check(is_digraph in ('y','n')),
     is_weighted CHAR(1) DEFAULT 'n' check(is_weighted in ('y','n')),
-    is_bipartite CHAR(1) DEFAULT 'n' check(is_bipartite in ('y','n')),
     representation VARCHAR2(25) DEFAULT 'adjacency_matrix' check(representation in ('edge_list','adjacency_matrix','adjacency_list')),
     data CLOB,
     CONSTRAINT fk_graph_id_data_set FOREIGN KEY (id) REFERENCES data_set(id)
@@ -782,7 +781,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20001, 'Invalid edge list !');
     END IF;
 END;
-
+/
 --statistics--
   CREATE OR REPLACE FORCE VIEW "STUDENT"."USER_DATA_DISTRIBUTION" ("USER_ID", "USERNAME", "TYPE", "TYPE_COUNT", "PERCENTAGE") AS 
   SELECT 
@@ -829,11 +828,12 @@ INSERT INTO character_array (id, length, encoding, data) VALUES (2, 3, 'utf8', '
 /
 INSERT INTO matrix (id, lines, columns, min_value, max_value, data) VALUES (3, 2, 3, 0, 255, '[[255,0,128],[64,192,32]]')
 /
-INSERT INTO graph (id, nodes, edges, is_digraph, is_weighted, is_bipartite, representation, data) VALUES (4, 4, 5, 'n', 'y', 'n', 'adjacency_list', '{"nodes":["A","B","C","D"],"edges":[["A","B",5],["A","C",3],["B","D",2],["C","D",7],["B","C",1]]}')
+INSERT INTO graph (id, nodes, edges, is_digraph, is_weighted, representation, data) VALUES (4, 3, 3, 'y', 'n', 'adjacency_list', '[[1,2],[0,2],[0,1]]')
 
 /
-INSERT INTO tree (id, nodes, edges, root, is_weighted, representation, data) VALUES (5, 5, 4, 1, 'n', 'adjacency_list', '-5,0,0,1,0');
-
+INSERT INTO tree (id, nodes, edges, root, is_weighted, representation, data) VALUES (5, 5, 4, 1, 'n', 'parent_list', '-5,0,0,1,0');
+/
+select * from user_data_distribution ;
 
 select * from users;
 
