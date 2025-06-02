@@ -3,37 +3,47 @@
 <head>
     <meta charset="UTF-8" />
     <title>Register</title>
+    <link rel="stylesheet" href="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/templates/auth.css">
 </head>
 <body>
+<div class="login-container">
+    <div class="login-box">
+        <div class="logo"></div>
+        <div class="login-title">Register</div>
 
-<h2>Register</h2>
-<form id="registerForm">
-    <div>
-        <input type="text" name="username" placeholder="Username" autocomplete="username" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
-    </div>
-    
-    <div>
-        <input type="password" id="firstPassword" name="password" placeholder="Password" autocomplete="new-password" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
-        <button type="button" data-show-password="firstPassword"> 👁️ </button>
-    </div>
-    
-    <div>
-        <input type="password" id="secondPassword" name="copy_password" placeholder="Confirm password" autocomplete="new-password" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
-        <button type="button" data-show-password="secondPassword"> 👁️ </button>
-    </div>
-    
-    <div>
-        <input type="email" name="email" placeholder="Email" autocomplete="email" required oninvalid="this.setCustomValidity('Fill out this field!🤨')" oninput="this.setCustomValidity('')" />
-    </div>
+        <form id="registerForm" novalidate >
+            <div class="input-field username-field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username"  autocomplete="username" required />
+            </div>
 
-    <button type="submit">Register</button>
-</form>
-<div id="registerMessage"></div>
+            <div class="input-field password-field">
+                <label for="firstPassword">Password</label>
+                <input type="password" id="firstPassword" name="password" autocomplete="new-password" required />
+                <button type="button" class="toggle-password" data-show-password="firstPassword" aria-label="Show password">👁️</button>
+            </div>
 
-<p>
-    Already have an account?
-    <a href="index.php">Back to Login</a>
-</p>
+            <div class="input-field password-field">
+                <label for="secondPassword">Confirm Password</label>
+                <input type="password" id="secondPassword" name="copy_password"  autocomplete="new-password" required />
+                <button type="button" class="toggle-password" data-show-password="secondPassword" aria-label="Show password">👁️</button>
+            </div>
+
+            <div class="input-field username-field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" autocomplete="email" required />
+            </div>
+
+            <button class="login-button" type="submit"><span>Register</span></button>
+        </form>
+
+        <div id="registerMessage" style="margin-top: 15px; text-align: center;"></div>
+
+        <p style="text-align: center; margin-top: 20px;">
+            Already have an account? <a href="index.php">Back to Login</a>
+        </p>
+    </div>
+</div>
 
 <script src="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/js/register.js" defer></script>
 

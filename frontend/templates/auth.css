@@ -1,0 +1,184 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(-45deg,
+        #9dd4e9,
+        #74b3ce,
+        #0ea5e9,
+        #1500b1,
+        #74b3ce,
+        #9dd4e9);
+    background-size: 400% 400%;
+    animation: gradientFlow 20s linear infinite;
+}
+
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-box {
+    width: 400px;
+    padding: 40px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    background: #FFFFFF;
+    position: relative;
+    animation: fadeSlideUp 0.6s ease-out;
+}
+
+.logo {
+    width: 61px;
+    height: 61px;
+    background-size: contain;
+    margin: 0 auto 20px;
+}
+
+.login-title {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 36px;
+    line-height: 40px;
+    text-align: center;
+    margin-bottom: 40px;
+    color: #011049;
+}
+
+.input-field {
+    height: 52px;
+    border: 2px solid #000000;
+    margin-bottom: 16px;
+    position: relative;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    flex-direction: row;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.input-field input {
+    border: none;
+    outline: none;
+    font-size: 15px;
+    width: 100%;
+    background: transparent;
+}
+
+.input-field input:focus {
+    background-color: #e6f7ff;
+}
+
+.input-field label {
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    background: #FFFFFF;
+    padding: 0 5px;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.input-field:hover {
+    border-color: #0ea5e9;
+    background-color: #f0f9ff;
+    transform: scale(1.03);
+}
+
+.login-button {
+    height: 50px;
+    background: #9dd4e9;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 12px;
+    transition: all 0.3s ease;
+}
+
+.login-button:hover {
+    background: #0526aa;
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+.toggle-password {
+    font-size: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.toggle-password:hover {
+    transform: scale(1.2);
+    color: #0ea5e9;
+}
+
+.toggle-password svg {
+    stroke: #444;
+    transition: stroke 0.3s ease;
+}
+
+.toggle-password:hover svg {
+    stroke: #000;
+}
+
+#loginMessage,
+#registerMessage {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 16px;
+    color: #011049;
+}
+
+.error-message {
+    font-size: 13px;
+    color: #e63946;
+    margin-top: 4px;
+    padding-left: 5px;
+    display: none;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+input.invalid::placeholder {
+    color: #e63946;
+    font-weight: bold;
+}
+
