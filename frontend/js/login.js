@@ -6,11 +6,43 @@ window.showPassword = function(id) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+
     const loginForm = document.getElementById('loginForm');
     const loginMessage = document.getElementById('loginMessage');
+    const username = document.getElementById("username");
+    const password = document.getElementById("loginPassword");
+
+    const resetMessages = () => {
+        loginMessage.textContent = '';
+
+        username.classList.remove("invalid");
+        password.classList.remove("invalid");
+
+        username.placeholder = "Username";
+        password.placeholder = "Password";
+    };
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        resetMessages();
+
+        let hasError = false;
+
+        if (username.value.trim() === "") {
+            username.placeholder = "Please enter your username .";
+            username.classList.add("invalid");
+            hasError = true;
+        }
+
+        if (password.value.trim() === "") {
+            password.placeholder = "Password is required.";
+            password.classList.add("invalid");
+            hasError = true;
+        }
+
+        if (hasError) return;
+
         loginMessage.textContent = 'Se încarcă...';
 
         const payload = {
