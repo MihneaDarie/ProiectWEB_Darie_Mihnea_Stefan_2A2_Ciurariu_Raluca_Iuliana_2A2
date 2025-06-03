@@ -12,7 +12,7 @@
     <header class="top-bar">
       <h1>Generator</h1>
       <div class="top-bar-right">
-        <a href="/profile" class="profile-button-top" title="Go to Profile">
+        <a href="index.php?page=profile" class="profile-button-top" title="Go to Profile">
           <div class="profile-icon-container">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"
                  viewBox="0 0 24 24" fill="currentColor">

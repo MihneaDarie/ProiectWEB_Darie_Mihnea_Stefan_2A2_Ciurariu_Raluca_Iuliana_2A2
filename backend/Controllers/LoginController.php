@@ -7,8 +7,19 @@ class LoginController extends Controller {
         parent::__construct($connection);
     }
 
-    public function login_user($username, $password) {
-        return $this->model->login($username,$password);
+    public function login_user($user, $pass) {
+        $result = $this->model->login($user, $pass);
+
+        if ($result['success']) {
+            header('Location: /index.php?page=generator');
+            exit;
+        }
+
+        $errorMessage = $result['message'];
+        include __DIR__.'/../Views/LoginView.tpl';
     }
 
+    public function apiLogin($user, $pass) : array {
+        return $this->model->login($user, $pass);   
+    }
 }
