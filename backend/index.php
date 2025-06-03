@@ -25,6 +25,10 @@ function renderTemplate($template) {
 
 if ($page === 'register') {
     renderTemplate('RegisterView.tpl');
-} else {
+} else if($page === 'login'){
     renderTemplate('LoginView.tpl');
+}else if($page === 'generator'){
+    renderTemplate('GeneratorView.tpl');
+}else{
+    renderTemplate('ProfileView.tpl');
 }
