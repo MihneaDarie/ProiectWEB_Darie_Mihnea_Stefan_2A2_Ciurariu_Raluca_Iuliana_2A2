@@ -37,7 +37,7 @@ class LoginModel extends Model{
 
             $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');
 
-            setcookie("jwt", $jwt, time() + 3600, "/", "", false, true); //$jwt = $_COOKIE['token'] ?? null; (si folosim asta de fiecare data cand vrem sa luam tokenul in requesturi)
+            setcookie('jwt',$jwt,['expires'  => time() + 3600,'path' => '/', 'httponly' => true, 'samesite' => 'Lax']); //$jwt = $_COOKIE['token'] ?? null; (si folosim asta de fiecare data cand vrem sa luam tokenul in requesturi)
 
             return [
                 "success" => true,
