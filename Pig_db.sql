@@ -12,12 +12,25 @@ drop table graph CASCADE CONSTRAINTS
 /
 drop table tree CASCADE CONSTRAINTS
 /
+drop trigger valid_adjacency_matrix_g
+/
+drop trigger valid_adjacency_matrix_t
+/
+drop trigger valid_edge_list_t
+/
+drop trigger valid_edge_list_t
+/
+drop trigger valid_adjacency_list_g
+/
+drop trigger valid_adjacency_list_t
+/
 DROP SEQUENCE user_seq
 /
 DROP SEQUENCE data_set_seq
 /
 create SEQUENCE user_seq start with 1 increment by 1
 /
+
 CREATE TABLE users (
     id INTEGER PRIMARY KEY,
     username VARCHAR2(50) UNIQUE NOT NULL,
@@ -330,25 +343,7 @@ EXCEPTION
         END IF;
 END is_valid_adjacency_list;
 /
-create or replace TRIGGER valid_adjacency_list_g
-BEFORE INSERT OR UPDATE ON graph
-FOR EACH ROW
-WHEN(NEW.representation = 'adjacency_list')
-DECLARE
-    v_is_valid CHAR(1);
-BEGIN
-    v_is_valid := is_valid_adjacency_list(
-        :NEW.data,
-        :NEW.nodes,
-        :NEW.is_digraph,
-        :NEW.is_weighted
-    );
 
-    IF v_is_valid = 'n' THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency list !');
-    END IF;
-END;
-/
 create or replace FUNCTION is_valid_edge_list(
     p_data        CLOB,
     p_nodes       INTEGER,
@@ -533,25 +528,6 @@ EXCEPTION
         END IF;
 END is_valid_edge_list;
 /
-create or replace TRIGGER valid_edge_list_g
-BEFORE INSERT OR UPDATE ON graph
-FOR EACH ROW
-WHEN(NEW.representation = 'edge_list')
-DECLARE
-    v_is_valid CHAR(1);
-BEGIN
-    v_is_valid := is_valid_edge_list(
-        :NEW.data,
-        :NEW.nodes,
-        :NEW.is_digraph,
-        :NEW.is_weighted
-    );
-
-    IF v_is_valid = 'n' THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Invalid edge list !');
-    END IF;
-END;
-/
 create or replace FUNCTION is_valid_adjacency_matrix (
    p_data        CLOB,
    p_nodes       PLS_INTEGER,
@@ -602,7 +578,7 @@ BEGIN
 
    BEGIN
       v_context := 'Matrix initialization - Extending main collection';
-      v_matrix.EXTEND (p_nodes);
+      v_matrix.EXTEND(p_nodes);
 
       FOR i IN 1 .. p_nodes LOOP
          v_context := 'Row extraction - Processing row ' || i;
@@ -620,8 +596,7 @@ BEGIN
          FOR j IN 1 .. p_nodes LOOP
             BEGIN
                v_context := 'Value extraction and conversion - Row ' || i || ', Column ' || j;
-               v_value := TO_NUMBER (
-                           REGEXP_SUBSTR (v_row_txt, '[^,]+', 1, j), '99999');
+               v_value := TO_NUMBER (REGEXP_SUBSTR (v_row_txt, '[^,]+', 1, j), '99999');
 
                IF v_value < 0 THEN
                   RAISE_APPLICATION_ERROR(-20004, 'Negative value found at position [' || i || '][' || j || ']: ' || v_value);
@@ -694,25 +669,7 @@ EXCEPTION
       END IF;
 END is_valid_adjacency_matrix;
 /
-create or replace TRIGGER valid_adjacency_matrix_g
-BEFORE INSERT OR UPDATE ON graph
-FOR EACH ROW
-WHEN (NEW.representation = 'adjacency_matrix')
-DECLARE
-    v_is_valid CHAR(1);
-BEGIN
-    v_is_valid := is_valid_adjacency_matrix(
-        :NEW.data,
-        :NEW.nodes,
-        :NEW.is_digraph,
-        :NEW.is_weighted
-    );
 
-    IF v_is_valid = 'n' THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency matrix !');
-    END IF;
-END;
-/
 
 create table tree(
     id INTEGER NOT NULL PRIMARY KEY,
@@ -725,63 +682,7 @@ create table tree(
     CONSTRAINT fk_tree_id_data_set FOREIGN KEY (id) REFERENCES data_set(id)
 )
 /
-create or replace TRIGGER valid_adjacency_list_t
-BEFORE INSERT OR UPDATE ON tree
-FOR EACH ROW
-WHEN (NEW.representation = 'adjacency_list')
-DECLARE
-    v_is_valid CHAR(1);
-BEGIN
-    v_is_valid := is_valid_adjacency_list(
-        :NEW.data,
-        :NEW.nodes,
-        'n',
-        :NEW.is_weighted
-    );
 
-    IF v_is_valid = 'n' THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency list !');
-    END IF;
-END;
-/
-create or replace TRIGGER valid_adjacency_matrix_t
-BEFORE INSERT OR UPDATE ON tree
-FOR EACH ROW
-WHEN (NEW.representation = 'adjacency_matrix')
-DECLARE
-    v_is_valid CHAR(1);
-BEGIN
-    v_is_valid := is_valid_adjacency_matrix(
-        :NEW.data,
-        :NEW.nodes,
-        'n',
-        :NEW.is_weighted
-    );
-
-    IF v_is_valid = 'n' THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Invalid adjacency matrix !');
-    END IF;
-END;
-/
-create or replace TRIGGER valid_edge_list_t
-BEFORE INSERT OR UPDATE ON tree
-FOR EACH ROW
-WHEN (NEW.representation = 'edge_list')
-DECLARE
-    v_is_valid CHAR(1);
-BEGIN
-    v_is_valid := is_valid_edge_list(
-        :NEW.data,
-        :NEW.nodes,
-        'n',
-        :NEW.is_weighted
-    );
-
-    IF v_is_valid = 'n' THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Invalid edge list !');
-    END IF;
-END;
-/
 --statistics--
   CREATE OR REPLACE FORCE VIEW "STUDENT"."USER_DATA_DISTRIBUTION" ("USER_ID", "USERNAME", "TYPE", "TYPE_COUNT", "PERCENTAGE") AS 
   SELECT 
@@ -799,9 +700,236 @@ JOIN
 GROUP BY 
     u.id, u.username, d.type
 ORDER BY u.id
-
-
 /
+
+
+CREATE OR REPLACE PACKAGE pkg_graph_handler AS
+    
+    PROCEDURE insert_graph(
+        p_user_id INTEGER,
+        p_label VARCHAR2,
+        p_format VARCHAR2,
+        p_nodes INTEGER,
+        p_edges INTEGER,
+        p_is_digraph CHAR DEFAULT 'n',
+        p_is_weighted CHAR DEFAULT 'n',
+        p_representation VARCHAR2 DEFAULT 'adjacency_matrix',
+        p_data CLOB,
+        p_graph_id OUT INTEGER
+    );
+    
+    FUNCTION validate_graph_data(
+        p_data CLOB,
+        p_nodes INTEGER,
+        p_edges INTEGER,
+        p_is_digraph CHAR,
+        p_is_weighted CHAR,
+        p_representation VARCHAR2,
+        p_format VARCHAR2
+    ) RETURN VARCHAR2;
+    
+    FUNCTION validate_json_graph(
+        p_data CLOB,
+        p_nodes INTEGER,
+        p_edges INTEGER,
+        p_is_digraph CHAR,
+        p_is_weighted CHAR,
+        p_representation VARCHAR2
+    ) RETURN VARCHAR2;
+    
+END pkg_graph_handler;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_graph_handler AS
+
+    FUNCTION validate_json_graph(
+        p_data CLOB,
+        p_nodes INTEGER,
+        p_edges INTEGER,
+        p_is_digraph CHAR,
+        p_is_weighted CHAR,
+        p_representation VARCHAR2
+    ) RETURN VARCHAR2 IS
+        l_json_valid BOOLEAN := TRUE;
+        l_error_msg VARCHAR2(4000);
+    BEGIN
+        BEGIN
+            IF p_representation = 'adjacency_matrix' THEN
+                IF SUBSTR(TRIM(p_data), 1, 2) = '[[' AND SUBSTR(TRIM(p_data), -2, 2) = ']]' THEN
+                    RETURN is_valid_adjacency_matrix(p_data, p_nodes, p_is_digraph, p_is_weighted);
+                END IF;
+            ELSIF p_representation = 'edge_list' THEN
+                IF SUBSTR(TRIM(p_data), 1, 2) = '[[' AND SUBSTR(TRIM(p_data), -2, 2) = ']]' THEN
+                    RETURN is_valid_edge_list(p_data, p_nodes, p_is_digraph, p_is_weighted);
+                END IF;
+            ELSIF p_representation = 'adjacency_list' THEN
+                IF SUBSTR(TRIM(p_data), 1, 1) = '[' AND SUBSTR(TRIM(p_data), -1, 1) = ']' THEN
+                    RETURN is_valid_adjacency_list(p_data, p_nodes, p_is_digraph, p_is_weighted);
+                END IF;
+            END IF;
+            
+            RETURN 'Invalid JSON format for ' || p_representation;
+            
+        EXCEPTION
+            WHEN OTHERS THEN
+                RETURN 'JSON parsing error: ' || SQLERRM;
+        END;
+    END validate_json_graph;
+    
+    FUNCTION validate_graph_data(
+        p_data CLOB,
+        p_nodes INTEGER,
+        p_edges INTEGER,
+        p_is_digraph CHAR,
+        p_is_weighted CHAR,
+        p_representation VARCHAR2,
+        p_format VARCHAR2
+    ) RETURN VARCHAR2 IS
+        l_error_msg VARCHAR2(4000);
+        l_validation_result CHAR(1);
+    BEGIN
+        IF p_format = 'json' THEN
+            BEGIN
+                CASE p_representation
+                    WHEN 'adjacency_matrix' THEN
+                        l_validation_result := is_valid_adjacency_matrix(p_data, p_nodes, p_is_digraph, p_is_weighted);
+                    WHEN 'edge_list' THEN
+                        l_validation_result := is_valid_edge_list(p_data, p_nodes, p_is_digraph, p_is_weighted);
+                    WHEN 'adjacency_list' THEN
+                        l_validation_result := is_valid_adjacency_list(p_data, p_nodes, p_is_digraph, p_is_weighted);
+                END CASE;
+                
+                IF l_validation_result = 'y' THEN
+                    RETURN NULL;
+                ELSE
+                    RETURN 'Validation failed for ' || p_representation;
+                END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    RETURN SQLERRM;
+            END;
+        ELSE
+            l_error_msg := CASE p_representation
+                WHEN 'adjacency_matrix' THEN 
+                    pkg_graph_validator.validate_adjacency_matrix(p_data, p_nodes, p_edges, p_is_digraph, p_is_weighted)
+                WHEN 'edge_list' THEN 
+                    pkg_graph_validator.validate_edge_list(p_data, p_nodes, p_edges, p_is_digraph, p_is_weighted)
+                WHEN 'adjacency_list' THEN 
+                    pkg_graph_validator.validate_adjacency_list(p_data, p_nodes, p_edges, p_is_digraph, p_is_weighted)
+            END;
+            RETURN l_error_msg;
+        END IF;
+    END validate_graph_data;
+    
+    PROCEDURE insert_graph(
+        p_user_id INTEGER,
+        p_label VARCHAR2,
+        p_format VARCHAR2,
+        p_nodes INTEGER,
+        p_edges INTEGER,
+        p_is_digraph CHAR DEFAULT 'n',
+        p_is_weighted CHAR DEFAULT 'n',
+        p_representation VARCHAR2 DEFAULT 'adjacency_matrix',
+        p_data CLOB,
+        p_graph_id OUT INTEGER
+    ) IS
+        l_data_set_id INTEGER;
+        l_error_msg VARCHAR2(4000);
+    BEGIN
+        IF p_format NOT IN ('json', 'csv') THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Format must be either json or csv');
+        END IF;
+        
+        l_error_msg := validate_graph_data(
+            p_data, p_nodes, p_edges, p_is_digraph, p_is_weighted, p_representation, p_format
+        );
+        
+        IF l_error_msg IS NOT NULL THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Graph validation failed: ' || l_error_msg);
+        END IF;
+        
+        INSERT INTO data_set (user_id, type, label, format)
+        VALUES (p_user_id, 'graph', p_label, p_format)
+        RETURNING id INTO l_data_set_id;
+        
+        INSERT INTO graph (id, nodes, edges, is_digraph, is_weighted, representation, data)
+        VALUES (l_data_set_id, p_nodes, p_edges, p_is_digraph, p_is_weighted, p_representation, p_data);
+        
+        p_graph_id := l_data_set_id;
+        
+        COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+            RAISE;
+    END insert_graph;
+
+END pkg_graph_handler;
+/
+
+CREATE OR REPLACE TRIGGER trg_validate_graph
+BEFORE INSERT OR UPDATE ON graph
+FOR EACH ROW
+DECLARE
+    l_error_msg VARCHAR2(4000);
+    l_format VARCHAR2(15);
+    l_validation_result CHAR(1);
+BEGIN
+    IF :NEW.nodes IS NULL OR :NEW.nodes <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Nodes count must be positive');
+    END IF;
+    
+    IF :NEW.edges IS NULL OR :NEW.edges < 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Edges count cannot be negative');
+    END IF;
+    
+    IF :NEW.data IS NULL OR DBMS_LOB.GETLENGTH(:NEW.data) = 0 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Graph data cannot be empty');
+    END IF;
+    
+    BEGIN
+        SELECT format INTO l_format
+        FROM data_set
+        WHERE id = :NEW.id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            IF SUBSTR(TRIM(:NEW.data), 1, 1) = '[' THEN
+                l_format := 'json';
+            ELSE
+                l_format := 'csv';
+            END IF;
+    END;
+    
+    IF l_format = 'json' THEN
+        BEGIN
+            CASE :NEW.representation
+                WHEN 'adjacency_matrix' THEN
+                    l_validation_result := is_valid_adjacency_matrix(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
+                WHEN 'edge_list' THEN
+                    l_validation_result := is_valid_edge_list(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
+                WHEN 'adjacency_list' THEN
+                    l_validation_result := is_valid_adjacency_list(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
+            END CASE;
+            
+            IF l_validation_result = 'n' THEN
+                RAISE_APPLICATION_ERROR(-20004, 'Invalid ' || :NEW.representation || ' format');
+            END IF;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE_APPLICATION_ERROR(-20004, 'Graph validation failed: ' || SQLERRM);
+        END;
+    ELSE
+        l_error_msg := pkg_graph_handler.validate_graph_data(
+            :NEW.data, :NEW.nodes, :NEW.edges, :NEW.is_digraph, :NEW.is_weighted, :NEW.representation, l_format
+        );
+        
+        IF l_error_msg IS NOT NULL THEN
+            RAISE_APPLICATION_ERROR(-20004, 'Graph validation failed: ' || l_error_msg);
+        END IF;
+    END IF;
+END;
+/
+
 INSERT INTO users (username, password, email, created_at) VALUES ('mihnea', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'mihnea@example.com', SYSTIMESTAMP)
 /
 INSERT INTO users (username, password, email, created_at) VALUES ('raluca', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'raluca@example.com', SYSTIMESTAMP)
@@ -818,6 +946,12 @@ INSERT INTO data_set (user_id, type, label, format, created_at) VALUES (1, 'matr
 /
 INSERT INTO data_set (user_id, type, label, format, created_at) VALUES (2, 'graph', 'prietenii de pe facebook', 'json', SYSTIMESTAMP)
 /
+INSERT INTO data_set (user_id, type, label, format, created_at) VALUES (2, 'graph', 'prietenii de pe facebook', 'csv', SYSTIMESTAMP)
+/
+INSERT INTO data_set (user_id, type, label, format, created_at) VALUES (2, 'graph', 'prietenii de pe facebook', 'csv', SYSTIMESTAMP)
+/
+INSERT INTO data_set (user_id, type, label, format, created_at) VALUES (2, 'graph', 'prietenii de pe facebook', 'csv', SYSTIMESTAMP)
+/
 INSERT INTO data_set (user_id, type, label, format, created_at) VALUES (2, 'tree', 'arborele genealogic', 'csv', SYSTIMESTAMP)
 /
 
@@ -829,9 +963,30 @@ INSERT INTO character_array (id, length, encoding, data) VALUES (2, 3, 'utf8', '
 INSERT INTO matrix (id, lines, columns, min_value, max_value, data) VALUES (3, 2, 3, 0, 255, '[[255,0,128],[64,192,32]]')
 /
 INSERT INTO graph (id, nodes, edges, is_digraph, is_weighted, representation, data) VALUES (4, 3, 3, 'y', 'n', 'adjacency_list', '[[1,2],[0,2],[0,1]]')
-
 /
-INSERT INTO tree (id, nodes, edges, root, is_weighted, representation, data) VALUES (5, 5, 4, 1, 'n', 'parent_list', '-5,0,0,1,0');
+
+INSERT INTO graph (id, nodes, edges, is_digraph, is_weighted, representation, data)
+VALUES (5, 3, 2, 'n', 'n', 'adjacency_matrix', 
+'0 1 1
+1 0 0
+1 0 0');
+
+INSERT INTO graph (id, nodes, edges, is_digraph, is_weighted, representation, data)
+VALUES (6, 4, 5, 'y', 'y', 'edge_list',
+'0 1 2.5
+0 2 1.0
+1 2 3.5
+2 3 4.0
+3 0 2.0');
+
+INSERT INTO graph (id, nodes, edges, is_digraph, is_weighted, representation, data)
+VALUES (7, 4, 4, 'n', 'n', 'adjacency_list',
+'1 2
+0 3
+0 3
+1 2');
+/
+INSERT INTO tree (id, nodes, edges, root, is_weighted, representation, data) VALUES (8, 5, 4, 1, 'n', 'parent_list', '-5,0,0,1,0');
 /
 select * from user_data_distribution ;
 
@@ -848,4 +1003,5 @@ select * from matrix;
 select * from graph;
 
 select * from tree;
+
 
