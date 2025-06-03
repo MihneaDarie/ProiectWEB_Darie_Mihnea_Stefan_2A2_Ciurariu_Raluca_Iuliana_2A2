@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const response = await fetch(
-            '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/Controllers/api.php/register',
+            '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php/?page=register',
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

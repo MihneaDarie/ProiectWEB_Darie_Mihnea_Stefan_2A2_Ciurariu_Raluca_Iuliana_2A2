@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . '/../../vendor/autoload.php';
-$env = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+require_once __DIR__ . '/../vendor/autoload.php';
+$env = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $env->load();
 
-require_once __DIR__ . '/RegisterController.php';
-require_once __DIR__ . '/LoginController.php';
+ require_once __DIR__ . '/Controllers/RegisterController.php';
+ require_once __DIR__ . '/Controllers/LoginController.php';
 
 header('Content-Type: application/json');
 
@@ -15,27 +15,25 @@ if (!$conn) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$page   = $_GET['page'] ?? '';              
+$input  = json_decode(file_get_contents('php://input'), true) ?? [];
 
-$scriptName = $_SERVER['SCRIPT_NAME'];
-$route = substr($path, strlen($scriptName));
-
-$input = json_decode(file_get_contents('php://input'), true) ?? [];
-
-if ($method === 'POST' && preg_match('/register$/', $route)) {
-    $username = $input['username'] ?? '';
-    $password = $input['password'] ?? '';
+if ($method === 'POST' && $page === 'register') {
+    $username      = $input['username']      ?? '';
+    $password      = $input['password']      ?? '';
     $copy_password = $input['copy_password'] ?? '';
-    $email = $input['email'] ?? '';
+    $email         = $input['email']         ?? '';
     $registerController = new RegisterController($conn);
     $response = $registerController->register_user($username, $password, $copy_password, $email);
     echo json_encode($response);
     exit;
-} elseif ($method === 'POST' && preg_match('/login$/', $route)) {
+}
+
+if ($method === 'POST' && $page === 'login') {
     $username = $input['username'] ?? '';
     $password = $input['password'] ?? '';
     $loginController = new LoginController($conn);
-    $response = $loginController->login_user($username, $password);
+    $response = $loginController->apiLogin($username, $password);
     echo json_encode($response);
     exit;
 }
