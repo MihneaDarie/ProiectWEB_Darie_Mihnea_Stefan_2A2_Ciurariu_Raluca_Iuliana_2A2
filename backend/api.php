@@ -6,6 +6,7 @@ $env->load();
  require_once __DIR__ . '/Controllers/RegisterController.php';
  require_once __DIR__ . '/Controllers/LoginController.php';
  require_once __DIR__ . '/Controllers/GeneratorController.php';
+ require_once __DIR__ . '/Controllers/ProfileController.php'; 
 
 
 header('Content-Type: application/json');
@@ -39,6 +40,14 @@ if ($method === 'POST' && $page === 'login') {
     echo json_encode($response);
     exit;
 }
+if ($_SERVER['REQUEST_METHOD'] === 'GET' &&
+    ($_GET['action'] ?? '') === 'distribution') {
+
+    $ctrl = new ProfileController($conn);  
+    $ctrl->distribution();               
+    exit;
+}
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_GET['page'])) {

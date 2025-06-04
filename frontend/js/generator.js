@@ -76,14 +76,14 @@ document.addEventListener('DOMContentLoaded', function() {
             array.push(Math.floor(Math.random() * (max - min + 1)) + min);
         }
 
-        // Sort if needed
+        
         if (sortOrder === 'asc') {
             array.sort((a, b) => a - b);
         } else if (sortOrder === 'desc') {
             array.sort((a, b) => b - a);
         }
 
-        // Send to server
+       
         fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
             method: 'POST',
             headers: {
