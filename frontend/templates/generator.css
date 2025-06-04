@@ -151,3 +151,73 @@ body, html {
   border-radius: 12px;
   padding: 20px;
 }
+
+.input-group {
+    display: flex;
+    gap: 20px;
+    position: relative;
+}
+
+.input-select {
+    flex: 0 0 200px;  
+}
+
+.numerical-controls {
+    position: absolute;
+    right: 50px;
+    top: 130px;
+    width: 420px;
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.control-item {
+    margin-bottom: 15px;
+}
+
+.control-item label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: 500;
+}
+
+.control-item input,
+.control-item select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+}
+
+#generateBtn {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background-color:rgb(46, 167, 243);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#generateBtn:hover {
+    background-color:rgb(87, 227, 255);
+}
+
+.input-field {
+    margin-top: 20px;
+}
+
+.input-field input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+}
