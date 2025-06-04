@@ -221,3 +221,261 @@ body, html {
     border-radius: 4px;
     background: #f8f8f8;
 }
+
+.character-controls {
+    position: absolute;
+    right: 50px;
+    top: 130px;
+    width: 420px;
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.character-controls .control-item {
+    margin-bottom: 15px;
+}
+
+.character-controls .control-item label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: 500;
+}
+
+.character-controls .control-item input,
+.character-controls .control-item select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+    font-size: 15px;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.character-controls .control-item input:focus,
+.character-controls .control-item select:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    background-color: #e6f7ff;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+
+#generateCharacter {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: rgb(46, 167, 243);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease, box-shadow 0.2s;
+}
+
+#generateCharacter:hover {
+    background-color: rgb(87, 227, 255);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#generateCharacter:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+.matrix-controls {
+    position: absolute;
+    right: 50px;
+    top: 130px;
+    width: 420px;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.matrix-controls .control-item {
+    margin-bottom: 15px;
+}
+
+.matrix-controls .control-item label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: 500;
+}
+
+.matrix-controls .control-item input,
+.matrix-controls .control-item select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+    font-size: 15px;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.matrix-controls .control-item input:focus,
+.matrix-controls .control-item select:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    background-color: #e6f7ff;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+#generateMatrix {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: rgb(46, 167, 243);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease, box-shadow 0.2s;
+}
+
+#generateMatrix:hover {
+    background-color: rgb(87, 227, 255);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#generateMatrix:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.graphs-controls {
+    position: absolute;
+    right: 50px;
+    top: 130px;
+    width: 420px;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.graphs-controls .control-item {
+    margin-bottom: 15px;
+}
+
+.graphs-controls .control-item label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: 500;
+}
+
+.graphs-controls .control-item input,
+.graphs-controls .control-item select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+    font-size: 15px;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.graphs-controls .control-item input:focus,
+.graphs-controls .control-item select:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    background-color: #e6f7ff;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+
+#generateGraph {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: rgb(46, 167, 243);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease, box-shadow 0.2s;
+}
+
+#generateGraph:hover {
+    background-color: rgb(87, 227, 255);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#generateGraph:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+/* === TREE CONTROLS === */
+.tree-controls {
+    position: absolute;
+    right: 50px;
+    top: 130px;
+    width: 300px; /* suficient pentru un singur input + buton */
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.tree-controls .control-item {
+    margin-bottom: 15px;
+}
+
+.tree-controls .control-item label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: 500;
+}
+
+.tree-controls .control-item input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f8f8;
+    font-size: 15px;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.tree-controls .control-item input:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    background-color: #e6f7ff;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+#generateTree {
+    width: 100%;
+    margin-top: 5px;
+    padding: 10px;
+    background-color: rgb(46, 167, 243);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease, box-shadow 0.2s;
+}
+
+#generateTree:hover {
+    background-color: rgb(87, 227, 255);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#generateTree:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
