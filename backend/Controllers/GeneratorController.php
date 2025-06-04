@@ -10,8 +10,25 @@ class GeneratorController extends Controller {
         $this->generatorModel = new GeneratorModel($connection);
     }
 
-    public function handleRequest() {
-        $input = json_decode(file_get_contents('php://input'), true);
+        public function handleRequest($type, $data, $params = []) {
+        if (empty($type)) {
+            return [
+                'success' => false,
+                'message' => 'Data type not specified'
+            ];
+        }
+
+        $input = [
+            'type' => $type,
+            'array' => $data,
+            'length' => $params['length'] ?? null,
+            'minValue' => $params['minValue'] ?? null,
+            'maxValue' => $params['maxValue'] ?? null,
+            'sortOrder' => $params['sortOrder'] ?? null,
+            'rows' => $params['rows'] ?? null,
+            'cols' => $params['cols'] ?? null,
+            'charSet' => $params['charSet'] ?? null
+        ];
 
         if (!$this->validateInput($input)) {
             return [
@@ -21,12 +38,10 @@ class GeneratorController extends Controller {
         }
 
         try {
-            $result = $this->generatorModel->insert_numeric_array(
-                $input['minValue'],
-                $input['maxValue'],
-                $input['arrayLength'],
-                $input['sortOrder'],
-                $input['array']
+            $result = $this->generatorModel->insert_data_set(
+                $type,
+                $data,
+                $params
             );
 
             return $result;
@@ -40,11 +55,35 @@ class GeneratorController extends Controller {
     }
 
     private function validateInput($input) {
-        return isset($input['minValue']) &&
-               isset($input['maxValue']) &&
-               isset($input['arrayLength']) &&
-               isset($input['sortOrder']) &&
-               isset($input['array']) &&
-               is_array($input['array']);
+        switch($input['type']) {
+            case 'number_array':
+                return isset($input['minValue']) &&
+                    isset($input['maxValue']) &&
+                    isset($input['length']) &&
+                    isset($input['sortOrder']) &&
+                    isset($input['array']) &&
+                    is_array($input['array']);
+            
+            case 'character_array':
+                return isset($input['charSet']) &&
+                    isset($input['length']) &&
+                    isset($input['array']) &&
+                    is_string($input['array']);
+            
+            case 'matrix':
+                return isset($input['rows']) &&
+                    isset($input['cols']) &&
+                    isset($input['array']) &&
+                    is_array($input['array']);
+            
+            case 'graph':
+            case 'tree':
+                return isset($input['array']) &&
+                    is_array($input['array']);
+            
+            default:
+                return false;
+        }
     }
+
 }

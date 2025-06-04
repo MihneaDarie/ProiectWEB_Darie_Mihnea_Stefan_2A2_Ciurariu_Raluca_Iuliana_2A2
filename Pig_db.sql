@@ -791,11 +791,11 @@ CREATE OR REPLACE PACKAGE BODY pkg_graph_handler AS
 END pkg_graph_handler;
 /
 
-CREATE OR REPLACE TRIGGER trg_validate_graph
+
+CREATE OR REPLACE TRIGGER trg_validate_graph_simple
 BEFORE INSERT OR UPDATE ON graph
 FOR EACH ROW
 DECLARE
-    l_error_msg VARCHAR2(4000);
     l_validation_result CHAR(1);
 BEGIN
     IF :NEW.nodes IS NULL OR :NEW.nodes <= 0 THEN
@@ -810,23 +810,17 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20003, 'Graph data cannot be empty');
     END IF;
     
-    BEGIN
-        CASE :NEW.representation
-            WHEN 'adjacency_matrix' THEN
-                l_validation_result := is_valid_adjacency_matrix(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
-            WHEN 'edge_list' THEN
-                l_validation_result := is_valid_edge_list(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
-            WHEN 'adjacency_list' THEN
-                l_validation_result := is_valid_adjacency_list(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
-        END CASE;
-        
-        IF l_validation_result = 'n' THEN
-            RAISE_APPLICATION_ERROR(-20004, 'Invalid ' || :NEW.representation || ' format');
-        END IF;
-    EXCEPTION
-        WHEN OTHERS THEN
-            RAISE_APPLICATION_ERROR(-20004, 'Graph validation failed: ' || SQLERRM);
-    END;
+    IF :NEW.representation = 'adjacency_matrix' THEN
+        l_validation_result := is_valid_adjacency_matrix(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
+    ELSIF :NEW.representation = 'edge_list' THEN
+        l_validation_result := is_valid_edge_list(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
+    ELSIF :NEW.representation = 'adjacency_list' THEN
+        l_validation_result := is_valid_adjacency_list(:NEW.data, :NEW.nodes, :NEW.is_digraph, :NEW.is_weighted);
+    END IF;
+    
+    IF l_validation_result = 'n' THEN
+        RAISE_APPLICATION_ERROR(-20004, 'Invalid ' || :NEW.representation || ' format');
+    END IF;
 END;
 /
 

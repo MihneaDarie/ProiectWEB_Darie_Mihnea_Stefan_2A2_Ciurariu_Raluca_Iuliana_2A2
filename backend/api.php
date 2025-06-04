@@ -40,12 +40,21 @@ if ($method === 'POST' && $page === 'login') {
     exit;
 }
 
-if ($method === 'POST' && $page === 'generate') {
-    $generatorController = new GeneratorController($conn);
-    $response = $generatorController->handleRequest();
-    echo json_encode($response);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_GET['page'])) {
+        if ($_GET['page'] === 'generate') {
+            $input = json_decode(file_get_contents('php://input'), true);           
+            try {
+                $generatorController = new GeneratorController($conn);
+                $response = $generatorController->handleRequest($input['type'], $input['array'], $input);
+                echo json_encode($response);
+                exit;
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Controller error: ' . $e->getMessage()]);
+                exit;
+            }
+        }
+    }
+    echo json_encode(['success' => false, 'message' => 'Route not found']);
     exit;
 }
-
-echo json_encode(['success' => false, 'message' => 'Route not found']);
-exit;

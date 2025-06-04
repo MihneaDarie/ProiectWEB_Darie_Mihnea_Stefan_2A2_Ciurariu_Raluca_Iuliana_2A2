@@ -70,40 +70,48 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Generate array
         let array = [];
         for (let i = 0; i < length; i++) {
             array.push(Math.floor(Math.random() * (max - min + 1)) + min);
         }
 
+        // Sort if needed
         if (sortOrder === 'asc') {
             array.sort((a, b) => a - b);
         } else if (sortOrder === 'desc') {
             array.sort((a, b) => b - a);
         }
 
+        // Send to server
         fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                type: 'number_array',
+                array: array,
+                length: length,
                 minValue: min,
                 maxValue: max,
-                arrayLength: length,
-                sortOrder: sortOrder,
-                array: array
+                sortOrder: sortOrder || 'none'
             }),
             credentials: 'include'
         })
         .then(response => response.json())
         .then(data => {
-            outputArea.innerHTML = `
-                <div style="padding: 20px;">
-                    <div style="background: #f0f0f0; padding: 15px; border-radius: 8px;">
-                        [${array.join(', ')}]
+            if (data.success) {
+                outputArea.innerHTML = `
+                    <div style="padding: 20px;">
+                        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px;">
+                            [${array.join(', ')}]
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                throw new Error(data.message);
+            }
         })
         .catch(error => {
             outputArea.innerHTML = `
@@ -111,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     Error: ${error.message}
                 </div>
             `;
+            console.error('Error details:', error);
         });
     });
 
@@ -129,13 +138,40 @@ document.addEventListener('DOMContentLoaded', function() {
             str += charSet.charAt(idx);
         }
 
-        outputArea.innerHTML = `
-            <div style="padding: 20px;">
-                <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 10px;">
-                    "${str}"
+        fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'character_array',
+                array: str,
+                length: length,
+                charSet: charSet
+            }),
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                outputArea.innerHTML = `
+                    <div style="padding: 20px;">
+                        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                            "${str}"
+                        </div>
+                    </div>
+                `;
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            outputArea.innerHTML = `
+                <div style="color: red; padding: 15px;">
+                    Error: ${error.message}
                 </div>
-            </div>
-        `;
+            `;
+        });
     });
 
     generateMatrix.addEventListener('click', function() {
@@ -165,8 +201,38 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     html += `   </div>
                </div>`;
+    
+    fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'matrix',
+                array: matrix,
+                rows: rows,
+                cols: cols,
+                minValue: minV,
+                maxValue: maxV
+            }),
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                outputArea.innerHTML = html;
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            outputArea.innerHTML = `
+                <div style="color: red; padding: 15px;">
+                    Error: ${error.message}
+                </div>
+            `;
+        });
 
-    outputArea.innerHTML = html;
 });
     generateGraph.addEventListener('click', function() {
     const n = parseInt(document.getElementById('numVertices').value);
@@ -234,7 +300,35 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>
     `;
-    outputArea.innerHTML = html;
+    fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'graph',
+                array: adj,
+                vertices: n,
+                edges: m,
+                graphType: type
+            }),
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                outputArea.innerHTML = html;
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            outputArea.innerHTML = `
+                <div style="color: red; padding: 15px;">
+                    Error: ${error.message}
+                </div>
+            `;
+        });
 });
 
     generateTree.addEventListener('click', function() {
@@ -271,7 +365,33 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     `;
 
-    outputArea.innerHTML = html;
+    fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            type: 'tree',
+            array: parent,
+            nodes: n
+        }),
+        credentials: 'include'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            outputArea.innerHTML = html;
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(error => {
+        outputArea.innerHTML = `
+            <div style="color: red; padding: 15px;">
+                Error: ${error.message}
+            </div>
+        `;
+    });
 });
 
 });
