@@ -5,6 +5,8 @@ $env->load();
 
  require_once __DIR__ . '/Controllers/RegisterController.php';
  require_once __DIR__ . '/Controllers/LoginController.php';
+ require_once __DIR__ . '/Controllers/GeneratorController.php';
+
 
 header('Content-Type: application/json');
 
@@ -34,6 +36,13 @@ if ($method === 'POST' && $page === 'login') {
     $password = $input['password'] ?? '';
     $loginController = new LoginController($conn);
     $response = $loginController->apiLogin($username, $password);
+    echo json_encode($response);
+    exit;
+}
+
+if ($method === 'POST' && $page === 'generate') {
+    $generatorController = new GeneratorController($conn);
+    $response = $generatorController->handleRequest();
     echo json_encode($response);
     exit;
 }

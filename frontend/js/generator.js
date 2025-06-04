@@ -31,13 +31,37 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (sortOrder === 'desc') {
             array.sort((a, b) => b - a);
         }
-        
-        outputArea.innerHTML = `
-            <div style="padding: 20px;">
-                <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 10px;">
-                    [${array.join(', ')}]
+
+        fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                minValue: min,
+                maxValue: max,
+                arrayLength: length,
+                sortOrder: sortOrder,
+                array: array
+            }),
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            outputArea.innerHTML = `
+                <div style="padding: 20px;">
+                    <div style="background: #f0f0f0; padding: 15px; border-radius: 8px;">
+                        [${array.join(', ')}]
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        })
+        .catch(error => {
+            outputArea.innerHTML = `
+                <div style="color: red; padding: 15px;">
+                    Error: ${error.message}
+                </div>
+            `;
+        });
     });
 });

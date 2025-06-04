@@ -23,4 +23,13 @@ abstract class Model {
         $row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS);
         return ($row['COUNT'] > 0);
     }
+
+    public function get_userId_by_username($username) {
+        $sql = 'SELECT id FROM users WHERE username = :username';
+        $stmt = oci_parse($this->connection, $sql);
+        oci_bind_by_name($stmt, ':username', $username);
+        oci_execute($stmt);
+        $row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS);
+        return $row['ID'] ?? null;
+    }
 }
