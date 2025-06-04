@@ -55,7 +55,66 @@
                 </div>
                 <button id="generateBtn">Generate Array</button>
             </div>
-            <div class="input-field">
+            <div class="character-controls" style="display: none;">
+                    <div class="control-item">
+                        <label for="charSet">Set of characters</label>
+                        <input type="text" id="charSet" name="charSet" >
+                    </div>
+                    <div class="control-item">
+                        <label for="stringLength">String Length</label>
+                        <input type="number" id="stringLength" name="stringLength" min="1">
+                    </div>
+                    <button id="generateCharacter">Generate String Array</button>
+            </div>
+        
+                <div class="matrix-controls" style="display: none;">
+                <div class="control-item">
+                <label for="numRows">Rows</label>
+                <input type="number" id="numRows" name="numRows" min="1" >
+            </div>
+                <div class="control-item">
+                <label for="numCols">Columns</label>
+                <input type="number" id="numCols" name="numCols" min="1" >
+            </div>
+                <div class="control-item">
+                <label for="minMatrixValue">Min Value</label>
+                <input type="number" id="minMatrixValue" name="minMatrixValue" >
+            </div>
+                <div class="control-item">
+                <label for="maxMatrixValue">Max Value</label>
+                <input type="number" id="maxMatrixValue" name="maxMatrixValue">
+            </div>
+            <button id="generateMatrix">Generate Matrix</button>
+        </div>
+
+        <div class="graphs-controls" style="display: none;">
+                <div class="control-item">
+                    <label for="numVertices">Number of vertices</label>
+                    <input type="number" id="numVertices" name="numVertices" min="1" placeholder="e.g. 4">
+                </div>
+                <div class="control-item">
+                    <label for="numEdges">Number of edges</label>
+                    <input type="number" id="numEdges" name="numEdges" min="0" placeholder="e.g. 5">
+                </div>
+                <div class="control-item">
+                    <label for="graphType">Graph type</label>
+                    <select id="graphType" name="graphType">
+                        <option value="undirected">Undirected</option>
+                        <option value="directed">Directed</option>
+                    </select>
+                </div>
+                <button id="generateGraph">Generate Graph (Adj. Matrix)</button>
+            </div>
+
+            <div class="tree-controls" style="display: none;">
+                <div class="control-item">
+                <label for="numNodes">Number of nodes</label>
+                <input type="number" id="numNodes" name="numNodes" min="1" placeholder="e.g. 5">
+                </div>
+                <button id="generateTree">Generate Parent Array</button>
+            </div>
+
+        <div class="input-field">
                 <input type="text" id="outputField" placeholder="Input details" readonly>
             </div>
         </div>
