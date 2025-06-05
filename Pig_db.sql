@@ -824,6 +824,147 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE FUNCTION is_bipartite_graph(
+    p_data        CLOB,
+    p_nodes       INTEGER,
+    p_is_digraph  CHAR DEFAULT 'n',
+    p_is_weighted CHAR DEFAULT 'n'
+) RETURN CHAR IS
+    c_yes         CONSTANT CHAR := 'y';
+    c_no          CONSTANT CHAR := 'n';
+    
+    TYPE matrix_row  IS TABLE OF NUMBER;
+    TYPE matrix_type IS TABLE OF matrix_row;
+    v_matrix      matrix_type := matrix_type();
+    v_source      VARCHAR2(32767);
+    v_row_txt     VARCHAR2(32767);
+    v_value       NUMBER;
+    
+    TYPE color_array IS TABLE OF INTEGER;
+    v_colors      color_array := color_array();
+    TYPE queue_array IS TABLE OF INTEGER;
+    v_queue       queue_array := queue_array();
+    v_queue_start INTEGER := 1;
+    v_queue_end   INTEGER := 0;
+    v_current_node INTEGER;
+    
+    COLOR_UNVISITED CONSTANT INTEGER := 0;
+    COLOR_ONE       CONSTANT INTEGER := 1;
+    COLOR_TWO       CONSTANT INTEGER := 2;
+
+BEGIN
+
+    IF p_data IS NULL OR p_nodes IS NULL OR p_nodes <= 0 THEN
+        RETURN c_no;
+    END IF;
+    
+    IF p_is_digraph NOT IN (c_yes, c_no) OR p_is_weighted NOT IN (c_yes, c_no) THEN
+        RETURN c_no;
+    END IF;
+
+    BEGIN
+        v_source := DBMS_LOB.SUBSTR(p_data, 32767, 1);
+        v_source := REPLACE(v_source, '[[', '');
+        v_source := REPLACE(v_source, ']]', '');
+        v_source := REPLACE(v_source, '],[', '|');
+        
+        v_matrix.EXTEND(p_nodes);
+        
+        FOR i IN 1..p_nodes LOOP
+            v_row_txt := REGEXP_SUBSTR(v_source, '[^|]+', 1, i);
+            
+            IF v_row_txt IS NULL THEN
+                RETURN c_no;
+            END IF;
+            
+            v_matrix(i) := matrix_row();
+            v_matrix(i).EXTEND(p_nodes);
+            
+            FOR j IN 1..p_nodes LOOP
+                v_value := TO_NUMBER(REGEXP_SUBSTR(v_row_txt, '[^,]+', 1, j));
+                
+                IF v_value > 0 THEN
+                    v_matrix(i)(j) := 1;
+                ELSE
+                    v_matrix(i)(j) := 0;
+                END IF;
+            END LOOP;
+        END LOOP;
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN c_no;
+    END;
+
+    IF p_is_digraph = c_yes THEN
+        FOR i IN 1..p_nodes LOOP
+            FOR j IN 1..p_nodes LOOP
+                IF v_matrix(i)(j) = 1 OR v_matrix(j)(i) = 1 THEN
+                    v_matrix(i)(j) := 1;
+                    v_matrix(j)(i) := 1;
+                END IF;
+            END LOOP;
+        END LOOP;
+    END IF;
+
+    v_colors.EXTEND(p_nodes);
+    v_queue.EXTEND(p_nodes);
+    
+    FOR i IN 1..p_nodes LOOP
+        v_colors(i) := COLOR_UNVISITED;
+    END LOOP;
+    
+    FOR start_node IN 1..p_nodes LOOP
+        
+        IF v_colors(start_node) = COLOR_UNVISITED THEN
+           
+            v_colors(start_node) := COLOR_ONE;
+            v_queue_start := 1;
+            v_queue_end := 1;
+            v_queue(1) := start_node;
+            
+         
+            WHILE v_queue_start <= v_queue_end LOOP
+                v_current_node := v_queue(v_queue_start);
+                v_queue_start := v_queue_start + 1;
+                
+                
+                FOR neighbor IN 1..p_nodes LOOP
+                    IF v_matrix(v_current_node)(neighbor) = 1 THEN
+                        
+                        IF v_colors(neighbor) = COLOR_UNVISITED THEN
+                         
+                            IF v_colors(v_current_node) = COLOR_ONE THEN
+                                v_colors(neighbor) := COLOR_TWO;
+                            ELSE
+                                v_colors(neighbor) := COLOR_ONE;
+                            END IF;
+                            
+                          
+                            v_queue_end := v_queue_end + 1;
+                            v_queue(v_queue_end) := neighbor;
+                            
+                        ELSIF v_colors(neighbor) = v_colors(v_current_node) THEN
+                            
+                            RETURN c_no;
+                        END IF;
+                        
+                    END IF;
+                END LOOP;
+                
+            END LOOP;
+        END IF;
+    END LOOP;
+
+    RETURN c_yes;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN c_no;
+        
+END is_bipartite_graph;
+/
+
 INSERT INTO users (username, password, email, created_at) VALUES ('mihnea', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'mihnea@example.com', SYSTIMESTAMP)
 /
 INSERT INTO users (username, password, email, created_at) VALUES ('raluca', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'raluca@example.com', SYSTIMESTAMP)

@@ -1,5 +1,4 @@
 
-
 document.addEventListener('DOMContentLoaded', () => {
   const btn  = document.getElementById('statsButton');
   const card = document.querySelector('.profile-container');
