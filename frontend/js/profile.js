@@ -1,9 +1,9 @@
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async() => {
   const btn  = document.getElementById('statsButton');
   const card = document.querySelector('.profile-container');
   const ENDPOINT = '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution';
-
+  
   const buildBars = rows => {
     const wrapper = document.createElement('div');
     wrapper.className = 'bar-list';

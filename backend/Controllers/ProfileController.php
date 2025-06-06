@@ -37,4 +37,5 @@ class ProfileController extends Controller
             $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
+    
 }

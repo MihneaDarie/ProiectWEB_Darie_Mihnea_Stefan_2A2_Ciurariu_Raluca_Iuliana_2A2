@@ -27,13 +27,13 @@ body {
         #c197ef,
         #8a2be2);
     background-size: 200% 200%;
-    animation: gradientFlow 20s ease infinite;
+    animation: gradientFlow 15s ease infinite;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Container intermediar pentru centrare perfectă */
+
 .profile-page {
     display: flex;
     align-items: center;

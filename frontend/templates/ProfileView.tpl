@@ -11,7 +11,7 @@
   <div class="profile-container">
     <div class="decorative-image"></div>
     <div class="profile-image-wrapper"></div>
-    <h1 class="user-name">Nume Prenume</h1>
+    <h1 class="user-name"></h1>
 
     <div class="buttons-container">
       <button id="statsButton" class="profile-button">Statistics</button>
