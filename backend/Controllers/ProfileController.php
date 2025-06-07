@@ -37,5 +37,27 @@ class ProfileController extends Controller
             $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
     }
+    public function getUsername(): void
+{
+    header('Content-Type: application/json; charset=UTF-8');
+
+    try {
+        $jwt = $_COOKIE['jwt'] ?? null;
+        if (!$jwt) {
+            $this->jsonResponse(['error' => 'Token lipsă'], 401);
+        }
+
+        $payload = \Firebase\JWT\JWT::decode($jwt, new \Firebase\JWT\Key($this->jwtSecret, 'HS256'));
+        $username = $payload->username ?? null;
+
+        if (!$username) {
+            $this->jsonResponse(['error' => 'Username absent în token'], 401);
+        }
+
+        $this->jsonResponse(['username' => $username]);
+    } catch (\Throwable $e) {
+        $this->jsonResponse(['error' => $e->getMessage()], 500);
+    }
+}
     
 }

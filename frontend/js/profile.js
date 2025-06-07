@@ -3,6 +3,23 @@ document.addEventListener('DOMContentLoaded', async() => {
   const btn  = document.getElementById('statsButton');
   const card = document.querySelector('.profile-container');
   const ENDPOINT = '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution';
+  const usernameEl = document.querySelector('.user-name');
+
+  try {
+    const res = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUsername', {
+      credentials: 'include'
+    });
+
+    const json = await res.json();
+
+    if (res.ok && json.username && usernameEl) {
+      usernameEl.textContent = json.username;
+    } else {
+      console.warn('Nu s-a putut obține username-ul:', json.error || 'necunoscut');
+    }
+  } catch (err) {
+    console.error('Eroare la obținerea username-ului:', err);
+  }
   
   const buildBars = rows => {
     const wrapper = document.createElement('div');
