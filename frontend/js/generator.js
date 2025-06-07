@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elements
+   
     const inputType = document.getElementById('inputType');
     const outputArea = document.getElementById('outputArea');
     const clearButton = document.getElementById('clearOutput');
+    const copyButton = document.getElementById('copyOutput');
     
-    // Control panels
     const controls = {
         numerical: document.querySelector('.numerical-controls'),
         character: document.querySelector('.character-controls'),
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tree: document.querySelector('.tree-controls')
     };
 
-    // Buttons
+    
     const buttons = {
         numerical: document.getElementById('generateBtn'),
         character: document.getElementById('generateCharacter'),
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tree: document.getElementById('generateTree')
     };
 
-    // Helper function to show loading state
+   
     function setLoading(button, isLoading) {
         if (isLoading) {
             button.classList.add('loading');
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Helper function to display output
+    
     function displayOutput(content, isError = false) {
         outputArea.classList.remove('empty');
         if (isError) {
@@ -44,26 +44,127 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => outputArea.classList.remove('success'), 1500);
         }
         clearButton.style.display = 'block';
+        copyButton.style.display = 'block';
     }
 
-    // Clear output
+
+    function copyToClipboard() {
+        const outputContent = outputArea.querySelector('.output-content');
+        if (!outputContent) {
+            return;
+        }
+
+        let textToCopy = '';
+       
+        const outputItem = outputContent.querySelector('.output-item');
+        if (outputItem) {
+           
+            const numberArrayOutput = outputItem.querySelector('.number-array-output');
+            const stringOutput = outputItem.querySelector('.string-output');
+            const matrixOutput = outputItem.querySelector('.matrix-output');
+            const treeOutput = outputItem.querySelector('.tree-output');
+            
+            if (numberArrayOutput) {
+                textToCopy = numberArrayOutput.textContent.trim();
+            } else if (stringOutput) {
+                textToCopy = stringOutput.textContent.trim();
+            } else if (matrixOutput) {
+                let matrixText = matrixOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = matrixText.split('\n')
+                    .map(line => line.trimStart())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            } else if (treeOutput) {
+               
+                let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n') .replace(/<[^>]*>/g, '').split('\n')                    
+                                                    .map(l => l.trim()).filter(l => l.length).map(l => l.replace(/^Node:\s+|^Parent:\s+/i, '')) .join('\n');                    
+
+                textToCopy = treeText;
+            } else {
+               
+                let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = itemText.split('\n')
+                    .map(line => line.trimStart())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            }
+        }
+
+      
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showCopyFeedback();
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                fallbackCopyTextToClipboard(textToCopy);
+            });
+        } else {
+            fallbackCopyTextToClipboard(textToCopy);
+        }
+    }
+
+    
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopyFeedback();
+            }
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function showCopyFeedback() {
+        const originalText = copyButton.innerHTML;
+        copyButton.classList.add('copied');
+        copyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"/>
+            </svg>
+            Copied!
+        `;
+        
+        setTimeout(() => {
+            copyButton.classList.remove('copied');
+            copyButton.innerHTML = originalText;
+        }, 2000);
+    }
+
+    
     clearButton.addEventListener('click', function() {
         outputArea.classList.add('empty');
         outputArea.innerHTML = '<p>Generated content will appear here...</p>';
         clearButton.style.display = 'none';
+        copyButton.style.display = 'none';
     });
 
-    // Input type change handler
+    
+    copyButton.addEventListener('click', copyToClipboard);
+
+    
     inputType.addEventListener('change', function() {
-        // Hide all controls
+        
         Object.values(controls).forEach(control => {
             if (control) control.style.display = 'none';
         });
 
-        // Clear output
+        
         clearButton.click();
         
-        // Show selected control
         const selectedType = inputType.value;
         if (controls[selectedType]) {
             controls[selectedType].style.display = 'block';
@@ -71,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Numerical array generator
+    
     buttons.numerical.addEventListener('click', async function() {
         const min = parseInt(document.getElementById('minValue').value);
         const max = parseInt(document.getElementById('maxValue').value);
@@ -90,20 +191,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setLoading(this, true);
 
-        // Generate array
         let array = [];
         for (let i = 0; i < length; i++) {
             array.push(Math.floor(Math.random() * (max - min + 1)) + min);
         }
 
-        // Sort if needed
         if (sortOrder === 'asc') {
             array.sort((a, b) => a - b);
         } else if (sortOrder === 'desc') {
             array.sort((a, b) => b - a);
         }
 
-        // API call
         try {
             const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
                 method: 'POST',
@@ -126,8 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 displayOutput(`
                     <div class="output-item">
-                        <strong>Array (${length} elements):</strong><br>
-                        [${array.join(', ')}]
+                        <div class="number-array-output">[${array.join(', ')}]</div>
                     </div>
                 `);
             } else {
@@ -140,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Character array generator
+
     buttons.character.addEventListener('click', async function() {
         const charSet = document.getElementById('charSet').value;
         const length = parseInt(document.getElementById('stringLength').value);
@@ -178,8 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 displayOutput(`
                     <div class="output-item">
-                        <strong>Generated String (${length} characters):</strong><br>
-                        "${str}"
+                        <div class="string-output">${str}</div>
                     </div>
                 `);
             } else {
@@ -192,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Matrix generator
     buttons.matrix.addEventListener('click', async function() {
         const rows = parseInt(document.getElementById('numRows').value);
         const cols = parseInt(document.getElementById('numCols').value);
@@ -240,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success) {
-                let matrixHtml = '<div class="output-item"><strong>Matrix (' + rows + 'x' + cols + '):</strong><br><div class="matrix-output">';
+                let matrixHtml = '<div class="output-item"><div class="matrix-output">';
                 matrix.forEach(row => {
                     matrixHtml += row.map(val => String(val).padStart(4, ' ')).join(' ') + '<br>';
                 });
@@ -256,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Graph generator
+  
     buttons.graphs.addEventListener('click', async function() {
         const n = parseInt(document.getElementById('numVertices').value);
         const m = parseInt(document.getElementById('numEdges').value);
@@ -282,23 +377,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setLoading(this, true);
 
-        // Create adjacency matrix
         let adj = [];
         for (let i = 0; i < n; i++) {
             adj.push(new Array(n).fill(0));
         }
 
-        // Add random edges
         let edgesAdded = 0;
         let attempts = 0;
-        const maxAttempts = m * 10; // Prevent infinite loop
+        const maxAttempts = m * 10; 
 
         while (edgesAdded < m && attempts < maxAttempts) {
             const u = Math.floor(Math.random() * n);
             const v = Math.floor(Math.random() * n);
             attempts++;
 
-            if (u === v) continue; // No self-loops
+            if (u === v) continue; 
 
             if (type === 'undirected') {
                 if (adj[u][v] === 0) {
@@ -306,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     adj[v][u] = 1;
                     edgesAdded++;
                 }
-            } else { // directed
+            } else {
                 if (adj[u][v] === 0) {
                     adj[u][v] = 1;
                     edgesAdded++;
@@ -333,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success) {
-                let graphHtml = `<div class="output-item"><strong>${type.charAt(0).toUpperCase() + type.slice(1)} Graph (${n} vertices, ${edgesAdded} edges):</strong><br><div class="matrix-output">`;
+                let graphHtml = `<div class="output-item"><div class="matrix-output">`;
                 adj.forEach((row, i) => {
                     graphHtml += row.join(' ') + '<br>';
                 });
@@ -349,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Tree generator
+    
     buttons.tree.addEventListener('click', async function() {
         const n = parseInt(document.getElementById('numNodes').value);
 
@@ -360,11 +453,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setLoading(this, true);
 
-        // Generate parent array representation of tree
         let parent = new Array(n).fill(-1);
-        parent[0] = -1; // Root has no parent
+        parent[0] = -1; 
 
-        // Build tree by connecting each node to a random previous node
         for (let i = 1; i < n; i++) {
             const p = Math.floor(Math.random() * i);
             parent[i] = p;
@@ -389,10 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 displayOutput(`
                     <div class="output-item">
-                        <strong>Tree (${n} nodes) - Parent Array:</strong><br>
-                        <div class="matrix-output">
-                            Node:   ${Array.from({length: n}, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br>
-                            Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
+                        <div class="tree-output"> Node:   ${Array.from({length: n}, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br> Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
                         </div>
                     </div>
                 `);

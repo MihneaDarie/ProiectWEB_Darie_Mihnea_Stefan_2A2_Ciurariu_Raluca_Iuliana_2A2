@@ -131,7 +131,16 @@
             <div class="output-section">
                 <div class="output-header">
                     <h2>Output</h2>
+                    <div class="output-buttons">
                     <button class="clear-button" id="clearOutput" style="display: none;">Clear</button>
+                     <button class="copy-button" id="copyOutput" style="display: none;" title="Copy">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                            </svg>
+                            Copy
+                    </button>
+                    </div>
                 </div>
                 <div class="output-area empty" id="outputArea">
                     <p>Generated content will appear here...</p>

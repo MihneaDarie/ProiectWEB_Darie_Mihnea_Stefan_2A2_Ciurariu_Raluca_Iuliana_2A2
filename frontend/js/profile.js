@@ -2,7 +2,6 @@
 document.addEventListener('DOMContentLoaded', async() => {
   const btn  = document.getElementById('statsButton');
   const card = document.querySelector('.profile-container');
-  const ENDPOINT = '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution';
   const usernameEl = document.querySelector('.user-name');
 
   try {
@@ -71,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     card.appendChild(loader);
 
     try {
-      const res  = await fetch(ENDPOINT, { credentials: 'include' });
+      const res  = await fetch("/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution", { credentials: 'include' });
       const json = await res.json();
       console.log('STATISTIC DATA →', json.data);   
 
