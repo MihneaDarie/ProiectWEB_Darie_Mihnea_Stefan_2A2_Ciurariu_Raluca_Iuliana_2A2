@@ -40,14 +40,21 @@ if ($method === 'POST' && $page === 'login') {
     echo json_encode($response);
     exit;
 }
-if ($_SERVER['REQUEST_METHOD'] === 'GET' &&
-    ($_GET['action'] ?? '') === 'distribution') {
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $action = $_GET['action'] ?? '';
 
-    $ctrl = new ProfileController($conn);  
-    $ctrl->distribution();               
-    exit;
+    if ($action === 'distribution') {
+        $ctrl = new ProfileController($conn);
+        $ctrl->distribution();
+        exit;
+    }
+
+    if ($action === 'getUsername') {
+        $ctrl = new ProfileController($conn);
+        $ctrl->getUsername();
+        exit;
+    }
 }
-
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
