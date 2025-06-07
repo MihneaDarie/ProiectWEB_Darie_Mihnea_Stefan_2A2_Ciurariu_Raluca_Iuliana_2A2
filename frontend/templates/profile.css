@@ -27,13 +27,13 @@ body {
         #c197ef,
         #8a2be2);
     background-size: 200% 200%;
-    animation: gradientFlow 20s ease infinite;
+    animation: gradientFlow 15s ease infinite;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Container intermediar pentru centrare perfectă */
+
 .profile-page {
     display: flex;
     align-items: center;
@@ -129,4 +129,48 @@ body {
 .profile-button:hover {
     background: #222;
     transform: scale(1.05);
+}
+
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-top: 1.8rem;
+  width: 100%;
+}
+
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 90px;   
+  align-items: center;
+  gap: .8rem;
+  font-size: .95rem;
+}
+
+
+.bar-label {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+
+.bar-track {
+  width: 100%;
+  height: 14px;                   
+  background: #e0e3ec;        
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+
+.bar-fill {
+  height: 100%;
+  transition: width .4s ease;
+}
+
+
+.bar-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
