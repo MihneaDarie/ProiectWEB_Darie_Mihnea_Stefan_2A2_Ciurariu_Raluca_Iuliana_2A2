@@ -1,9 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
-   
     const inputType = document.getElementById('inputType');
     const outputArea = document.getElementById('outputArea');
     const clearButton = document.getElementById('clearOutput');
     const copyButton = document.getElementById('copyOutput');
+    const exportCSVButton = document.getElementById('exportCSV');
+    const exportJSONButton = document.getElementById('exportJSON');
+    
+    let currentGeneratedData = null;
+    let currentDataType = null;
     
     const controls = {
         numerical: document.querySelector('.numerical-controls'),
@@ -13,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
         tree: document.querySelector('.tree-controls')
     };
 
-    
     const buttons = {
         numerical: document.getElementById('generateBtn'),
         character: document.getElementById('generateCharacter'),
@@ -22,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
         tree: document.getElementById('generateTree')
     };
 
-   
     function setLoading(button, isLoading) {
         if (isLoading) {
             button.classList.add('loading');
@@ -33,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    
     function displayOutput(content, isError = false) {
         outputArea.classList.remove('empty');
         if (isError) {
@@ -45,8 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         clearButton.style.display = 'block';
         copyButton.style.display = 'block';
+        exportCSVButton.style.display = 'block';
+        exportJSONButton.style.display = 'block';
     }
-
 
     function copyToClipboard() {
         const outputContent = outputArea.querySelector('.output-content');
@@ -55,10 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let textToCopy = '';
-       
         const outputItem = outputContent.querySelector('.output-item');
         if (outputItem) {
-           
             const numberArrayOutput = outputItem.querySelector('.number-array-output');
             const stringOutput = outputItem.querySelector('.string-output');
             const matrixOutput = outputItem.querySelector('.matrix-output');
@@ -75,13 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     .filter(line => line.length > 0)
                     .join('\n');
             } else if (treeOutput) {
-               
-                let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n') .replace(/<[^>]*>/g, '').split('\n')                    
-                                                    .map(l => l.trim()).filter(l => l.length).map(l => l.replace(/^Node:\s+|^Parent:\s+/i, '')) .join('\n');                    
-
+                let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').split('\n')
+                                                    .map(l => l.trim()).filter(l => l.length).map(l => l.replace(/^Node:\s+|^Parent:\s+/i, '')).join('\n');
                 textToCopy = treeText;
             } else {
-               
                 let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
                 textToCopy = itemText.split('\n')
                     .map(line => line.trimStart())
@@ -90,7 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-      
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(textToCopy).then(() => {
                 showCopyFeedback();
@@ -103,7 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    
     function fallbackCopyTextToClipboard(text) {
         const textArea = document.createElement("textarea");
         textArea.value = text;
@@ -144,25 +139,145 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     }
 
+    function exportToCSV() {
+        if (!currentGeneratedData) return;
+        
+        let csvContent = "";
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0]; 
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); 
+        const timestamp = `${dateStr}_${timeStr}`;
+        let filename = `${currentDataType}_${timestamp}.csv`;
     
+        
+        switch(currentDataType) {
+            case 'number_array':
+                csvContent = currentGeneratedData.join(',');
+                break;
+            case 'character_array':
+                csvContent = currentGeneratedData;
+                break;
+            case 'matrix':
+                csvContent = currentGeneratedData.map(row => row.join(',')).join('\n');
+                break;
+            case 'graph':
+        
+                csvContent = 'Adjacency Matrix\n';
+                csvContent += currentGeneratedData.map(row => row.join(',')).join('\n');
+                break;
+            case 'tree':
+              
+                csvContent = 'Node,Parent\n';
+                currentGeneratedData.forEach((parent, node) => {
+                    csvContent += `${node},${parent}\n`;
+                });
+                break;
+        }
+        
+        downloadFile(csvContent, filename, 'text/csv');
+    }
+
+    function exportToJSON() {
+        if (!currentGeneratedData) return;
+        
+        let jsonData = {};
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); 
+        const timestamp = `${dateStr}_${timeStr}`;
+        let filename = `${currentDataType}_${timestamp}.json`;
+        
+        switch(currentDataType) {
+            case 'number_array':
+                jsonData = {
+                    type: 'numerical_array',
+                    data: currentGeneratedData,
+                    metadata: {
+                        length: currentGeneratedData.length,
+                        min: Math.min(...currentGeneratedData),
+                        max: Math.max(...currentGeneratedData)
+                    }
+                };
+                break;
+            case 'character_array':
+                jsonData = {
+                    type: 'character_array',
+                    data: currentGeneratedData,
+                    metadata: {
+                        length: currentGeneratedData.length
+                    }
+                };
+                break;
+            case 'matrix':
+                jsonData = {
+                    type: 'matrix',
+                    data: currentGeneratedData,
+                    metadata: {
+                        rows: currentGeneratedData.length,
+                        columns: currentGeneratedData[0].length
+                    }
+                };
+                break;
+            case 'graph':
+                jsonData = {
+                    type: 'graph',
+                    adjacency_matrix: currentGeneratedData,
+                    metadata: {
+                        vertices: currentGeneratedData.length,
+                        graph_type: document.getElementById('graphType').value
+                    }
+                };
+                break;
+            case 'tree':
+                jsonData = {
+                    type: 'tree',
+                    parent_list: currentGeneratedData,
+                    metadata: {
+                        nodes: currentGeneratedData.length,
+                        root: currentGeneratedData.indexOf(-1)
+                    }
+                };
+                break;
+        }
+        
+        const jsonContent = JSON.stringify(jsonData, null, 2);
+        downloadFile(jsonContent, filename, 'application/json');
+    }
+
+    function downloadFile(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        window.URL.revokeObjectURL(url);
+    }
+
+
+    exportCSVButton.addEventListener('click', exportToCSV);
+    exportJSONButton.addEventListener('click', exportToJSON);
+
     clearButton.addEventListener('click', function() {
         outputArea.classList.add('empty');
         outputArea.innerHTML = '<p>Generated content will appear here...</p>';
         clearButton.style.display = 'none';
         copyButton.style.display = 'none';
+        exportCSVButton.style.display = 'none';
+        exportJSONButton.style.display = 'none';
+        currentGeneratedData = null;
+        currentDataType = null;
     });
 
-    
     copyButton.addEventListener('click', copyToClipboard);
 
-    
     inputType.addEventListener('change', function() {
-        
         Object.values(controls).forEach(control => {
             if (control) control.style.display = 'none';
         });
 
-        
         clearButton.click();
         
         const selectedType = inputType.value;
@@ -172,7 +287,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    
     buttons.numerical.addEventListener('click', async function() {
         const min = parseInt(document.getElementById('minValue').value);
         const max = parseInt(document.getElementById('maxValue').value);
@@ -202,6 +316,9 @@ document.addEventListener('DOMContentLoaded', function() {
             array.sort((a, b) => b - a);
         }
 
+        currentGeneratedData = array;
+        currentDataType = 'number_array';
+
         try {
             const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
                 method: 'POST',
@@ -224,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 displayOutput(`
                     <div class="output-item">
-                        <div class="number-array-output">[${array.join(', ')}]</div>
+                        <div class="number-array-output">${array.join(', ')}</div>
                     </div>
                 `);
             } else {
@@ -236,7 +353,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setLoading(this, false);
         }
     });
-
 
     buttons.character.addEventListener('click', async function() {
         const charSet = document.getElementById('charSet').value;
@@ -254,6 +370,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const idx = Math.floor(Math.random() * charSet.length);
             str += charSet.charAt(idx);
         }
+
+        currentGeneratedData = str;
+        currentDataType = 'character_array';
 
         try {
             const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
@@ -315,6 +434,9 @@ document.addEventListener('DOMContentLoaded', function() {
             matrix.push(row);
         }
 
+        currentGeneratedData = matrix;
+        currentDataType = 'matrix';
+
         try {
             const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
                 method: 'POST',
@@ -351,7 +473,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-  
     buttons.graphs.addEventListener('click', async function() {
         const n = parseInt(document.getElementById('numVertices').value);
         const m = parseInt(document.getElementById('numEdges').value);
@@ -384,14 +505,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let edgesAdded = 0;
         let attempts = 0;
-        const maxAttempts = m * 10; 
+        const maxAttempts = m * 10;
 
         while (edgesAdded < m && attempts < maxAttempts) {
             const u = Math.floor(Math.random() * n);
             const v = Math.floor(Math.random() * n);
             attempts++;
 
-            if (u === v) continue; 
+            if (u === v) continue;
 
             if (type === 'undirected') {
                 if (adj[u][v] === 0) {
@@ -406,6 +527,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+        currentGeneratedData = adj;
+        currentDataType = 'graph';
 
         try {
             const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
@@ -442,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    
+
     buttons.tree.addEventListener('click', async function() {
         const n = parseInt(document.getElementById('numNodes').value);
 
@@ -454,12 +577,15 @@ document.addEventListener('DOMContentLoaded', function() {
         setLoading(this, true);
 
         let parent = new Array(n).fill(-1);
-        parent[0] = -1; 
+        parent[0] = -1;
 
         for (let i = 1; i < n; i++) {
             const p = Math.floor(Math.random() * i);
             parent[i] = p;
         }
+
+        currentGeneratedData = parent;
+        currentDataType = 'tree';
 
         try {
             const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
