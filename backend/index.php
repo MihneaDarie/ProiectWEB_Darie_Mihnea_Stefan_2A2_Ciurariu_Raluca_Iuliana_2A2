@@ -64,15 +64,15 @@ try {
     }
 
     if ($page === 'register') {
-        renderTemplate('RegisterView.tpl');
+        renderTemplate('RegisterView.html');
     } else if($page === 'login'){
-        renderTemplate('LoginView.tpl');
+        renderTemplate('LoginView.html');
     }else if($page === 'generator'){
         loggedIn();
-        renderTemplate('GeneratorView.tpl');
+        renderTemplate('GeneratorView.html');
     }else if($page === 'profile'){
         loggedIn();
-        renderTemplate('ProfileView.tpl');
+        renderTemplate('ProfileView.html');
     }else{
         echo '404 - Pagina nu a fost găsită';
     }
