@@ -458,6 +458,7 @@ button.loading::after {
     border: 1px solid #e2e8f0;
     font-family: 'Fira Code', monospace;
     font-size: 0.9375rem;
+    word-break: break-all;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -470,10 +471,8 @@ button.loading::after {
 .output-item:last-child {
     margin-bottom: 0;
 }
-
 .string-output,
 .number-array-output {
-    height: 200px;
     width: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -492,7 +491,6 @@ button.loading::after {
 }
 
 .matrix-output {
-    height: 250px;
     width: 100%;
     overflow: auto;
     font-family: monospace;
@@ -508,7 +506,6 @@ button.loading::after {
 }
 
 .tree-output {
-    height: 150px;
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
@@ -533,7 +530,7 @@ button.loading::after {
 
 .string-output::-webkit-scrollbar,
 .number-array-output::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
     height: 0px;
 }
 
@@ -561,8 +558,8 @@ button.loading::after {
 
 
 .matrix-output::-webkit-scrollbar {
-    height: 6px;
-    width: 6px;
+    height: 8px;
+    width: 8px;
 }
 
 .matrix-output::-webkit-scrollbar-track {
@@ -584,7 +581,7 @@ button.loading::after {
 }
 
 .tree-output::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
     width: 0px;
 }
 
@@ -670,7 +667,7 @@ button.loading::after {
     .number-array-output {
         padding: 0.75rem;
         font-size: 0.875rem; 
-        max-height: 250px; 
+        max-height: 300px; 
     }
 }
 
