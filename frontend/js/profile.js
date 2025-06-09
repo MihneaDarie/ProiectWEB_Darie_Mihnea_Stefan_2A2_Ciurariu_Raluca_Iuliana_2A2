@@ -8,16 +8,20 @@ class ProfileManager {
             closeBtn: document.getElementById('closePanel'),
             overlay: document.querySelector('.overlay'),
             profileContainer: document.querySelector('.profile-container'),
-            usernameEl: document.querySelector('.user-name')
+            usernameEl: document.querySelector('.user-name'),
+            logoutBtn: document.querySelector('.logout-button')
         };
 
         this.endpoints = {
             username: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUsername',
             userData: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUserData',
             updateProfile: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=updateProfile',
-            stats: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution'
+            stats: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution',
+            logout: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=logout'
         };
 
+        // Make the instance available globally
+        window.profileManager = this;
         this.init();
     }
 
@@ -49,6 +53,11 @@ class ProfileManager {
 
         if (this.elements.editBtn) {
             this.elements.editBtn.addEventListener('click', () => this.handleEditClick());
+        }
+
+        // Add logout button to elements
+        if (this.elements.logoutBtn) {
+            this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
         }
 
         document.addEventListener('click', (e) => this.handleOutsideClick(e));
@@ -200,25 +209,37 @@ class ProfileManager {
             <form id="editProfileForm" class="edit-form">
                 <div class="form-group">
                     <label class="form-label" for="username">Username</label>
-                    <input type="text" id="username" name="username" class="form-input" required>
+                    <input type="text" id="username" name="username" class="form-input" 
+                        autocomplete="username" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-input" required>
+                    <input type="email" id="email" name="email" class="form-input" 
+                        autocomplete="email" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" name="currentPassword" class="form-input" required>
+                    <input type="password" id="currentPassword" name="currentPassword" class="form-input" 
+                        autocomplete="current-password" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="newPassword">New Password (leave blank if unchanged)</label>
-                    <input type="password" id="newPassword" name="newPassword" class="form-input">
+                    <input type="password" id="newPassword" name="newPassword" class="form-input"
+                        autocomplete="new-password">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="confirmPassword">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input">
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                        autocomplete="new-password">
                 </div>
                 <button type="submit" class="submit-button">Save Changes</button>
+                <button 
+                    type="button" 
+                    class="logout-button" 
+                    id="logoutButton" 
+                    onclick="window.profileManager.handleLogout()">
+                    Logout
+                </button>
             </form>
         `;
     }
@@ -277,6 +298,28 @@ class ProfileManager {
         } catch (err) {
             this.showFormError('An error occurred. Please try again.');
             console.error(err);
+        }
+    }
+
+    async handleLogout() {
+        try {
+            console.log('Logout clicked');
+            
+            const response = await fetch(this.endpoints.logout, {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Logout failed');
+            }
+
+            document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
+        } catch (err) {
+            console.error('Logout error:', err);
+            alert('Failed to logout. Please try again.');
         }
     }
 

@@ -316,13 +316,21 @@ body {
 }
 
 .logout-button {
+    width: 100%;
+    padding: 14px;
     background: #ff4757 !important;
     color: white !important;
-    margin-top: 1rem;
-    width: 100%;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 16px;
 }
 
 .logout-button:hover {
     background: #ff6b81 !important;
+    transform: translateY(-2px);
 }
 

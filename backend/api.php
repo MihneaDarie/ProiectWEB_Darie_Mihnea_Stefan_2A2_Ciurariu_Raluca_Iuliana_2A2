@@ -75,6 +75,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
     }
 
+    if ($action === 'logout') {
+        setcookie('jwt', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'domain' => '',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Logged out successfully'
+        ]);
+        exit;
+    }
 }
 
 
