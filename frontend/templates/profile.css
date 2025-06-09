@@ -326,11 +326,10 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 16px;
+    margin-top: 2px;
 }
 
-.logout-button:hover {
-    background: #ff6b81 !important;
-    transform: translateY(-2px);
+.deleteBtn {
+    margin-top: 3px;
 }
 
