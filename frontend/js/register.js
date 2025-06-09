@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById("email");
 
     const resetMessages = () => {
-        registerMessage.textContent = '';
+        while (registerMessage.firstChild) {
+            registerMessage.removeChild(registerMessage.firstChild);
+        }
 
         username.classList.remove("invalid");
         firstpassword.classList.remove("invalid");
@@ -25,6 +27,21 @@ document.addEventListener('DOMContentLoaded', () => {
         firstpassword.placeholder = "Parola";
         secondpassword.placeholder = "Reintroduceti parola";
         email.placeholder = "Email";
+    };
+    const createMessage = (text, color, isSubMessage = false) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.style.color = color;
+        messageDiv.textContent = text;
+        
+        if (isSubMessage) {
+            messageDiv.style.fontSize = '14px';
+            messageDiv.style.marginTop = '5px';
+            messageDiv.style.color = '#6c757d';
+        } else {
+            messageDiv.style.fontWeight = 'bold';
+        }
+        
+        return messageDiv;
     };
 
     registerForm.addEventListener('submit', async (e) => {
@@ -57,29 +74,63 @@ document.addEventListener('DOMContentLoaded', () => {
             hasError = true;
         }
 
-         if (hasError) return;
+        if (hasError) return;
+        const loadingMsg = createMessage('Se încarcă...', '#6c757d');
+        registerMessage.appendChild(loadingMsg);
+        const submitButton = registerForm.querySelector('button[type="submit"]');
+        const submitSpan = submitButton.querySelector('span');
+        const originalText = submitSpan.textContent;
+        submitButton.disabled = true;
+        submitSpan.textContent = 'Processing...';
 
-        registerMessage.textContent = 'Se încarcă...';
+        try {
+            const payload = {
+                username: registerForm.username.value,
+                password: registerForm.password.value,
+                copy_password: registerForm.copy_password.value,
+                email: registerForm.email.value
+            };
 
-        const payload = {
-            username: registerForm.username.value,
-            password: registerForm.password.value,
-            copy_password: registerForm.copy_password.value,
-            email: registerForm.email.value
-        };
+            const response = await fetch(
+                '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php/?page=register',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }
+            );
 
-        const response = await fetch(
-            '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php/?page=register',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+            const data = await response.json();
+            while (registerMessage.firstChild) {
+                registerMessage.removeChild(registerMessage.firstChild);
             }
-        );
 
-        const data = await response.json();
-        registerMessage.textContent = data.message;
-        if (data.success) registerForm.reset();
+            if (data.success) {
+                const successMsg = createMessage(data.message, '#28a745');
+                registerMessage.appendChild(successMsg);
+                
+                const redirectMsg = createMessage('Redirecting to login...', '#6c757d', true);
+                registerMessage.appendChild(redirectMsg);
+                registerForm.reset();
+                window.location.href = 'index.php?page=login';
+
+            } else {
+                const errorMsg = createMessage(data.message, '#dc3545');
+                registerMessage.appendChild(errorMsg);
+                submitButton.disabled = false;
+                submitSpan.textContent = originalText;
+            }
+
+        } catch (error) {
+    
+            while (registerMessage.firstChild) {
+                registerMessage.removeChild(registerMessage.firstChild);
+            }
+            const networkErrorMsg = createMessage('Network error. Please try again.', '#dc3545');
+            registerMessage.appendChild(networkErrorMsg);
+            submitButton.disabled = false;
+            submitSpan.textContent = originalText;
+        }
     });
 
     const showPasswordButtons = document.querySelectorAll('button[data-show-password]');

@@ -167,9 +167,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'tree':
               
-                csvContent = 'Node,Parent\n';
-                currentGeneratedData.forEach((parent, node) => {
-                    csvContent += `${node},${parent}\n`;
+                csvContent = 'Parent list\n';
+                currentGeneratedData.forEach(parent => {
+                    csvContent += `${parent}\n`;
                 });
                 break;
         }
