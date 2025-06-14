@@ -3,10 +3,10 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $env = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $env->load();
 
- require_once __DIR__ . '/Controllers/RegisterController.php';
- require_once __DIR__ . '/Controllers/LoginController.php';
- require_once __DIR__ . '/Controllers/GeneratorController.php';
- require_once __DIR__ . '/Controllers/ProfileController.php'; 
+require_once __DIR__ . '/Controllers/RegisterController.php';
+require_once __DIR__ . '/Controllers/LoginController.php';
+require_once __DIR__ . '/Controllers/GeneratorController.php';
+require_once __DIR__ . '/Controllers/ProfileController.php';
 
 
 header('Content-Type: application/json');
@@ -18,14 +18,14 @@ if (!$conn) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$page   = $_GET['page'] ?? '';              
-$input  = json_decode(file_get_contents('php://input'), true) ?? [];
+$page = $_GET['page'] ?? '';
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
 
 if ($method === 'POST' && $page === 'register') {
-    $username      = $input['username']      ?? '';
-    $password      = $input['password']      ?? '';
+    $username = $input['username'] ?? '';
+    $password = $input['password'] ?? '';
     $copy_password = $input['copy_password'] ?? '';
-    $email         = $input['email']         ?? '';
+    $email = $input['email'] ?? '';
     $registerController = new RegisterController($conn);
     $response = $registerController->register_user($username, $password, $copy_password, $email);
     echo json_encode($response);
@@ -54,24 +54,138 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $ctrl->getUsername();
         exit;
     }
+
+    if ($action === 'getUserData') {
+        $ctrl = new ProfileController($conn);
+        $ctrl->getUserData();
+        exit;
+    }
+
+    if ($action === 'updateProfile') {
+        try {
+            $ctrl = new ProfileController($conn);
+            $ctrl->updateProfile();
+            exit;
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ]);
+            exit;
+        }
+    }
+
+    if ($action === 'logout') {
+        setcookie('jwt', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'domain' => '',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Logged out successfully'
+        ]);
+        exit;
+    }
 }
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_GET['page'])) {
-        if ($_GET['page'] === 'generate') {
-            $input = json_decode(file_get_contents('php://input'), true);           
-            try {
-                $generatorController = new GeneratorController($conn);
-                $response = $generatorController->handleRequest($input['type'], $input['array'], $input);
-                echo json_encode($response);
-                exit;
-            } catch (Exception $e) {
-                echo json_encode(['success' => false, 'message' => 'Controller error: ' . $e->getMessage()]);
-                exit;
-            }
+    $action = $_GET['action'] ?? '';
+    $page = $_GET['page'] ?? '';
+
+    if ($page === 'register') {
+        $username = $input['username'] ?? '';
+        $password = $input['password'] ?? '';
+        $copy_password = $input['copy_password'] ?? '';
+        $email = $input['email'] ?? '';
+        $registerController = new RegisterController($conn);
+        $response = $registerController->register_user($username, $password, $copy_password, $email);
+        echo json_encode($response);
+        exit;
+    }
+
+    if ($page === 'login') {
+        $username = $input['username'] ?? '';
+        $password = $input['password'] ?? '';
+        $loginController = new LoginController($conn);
+        $response = $loginController->apiLogin($username, $password);
+        echo json_encode($response);
+        exit;
+    }
+
+    if ($action === 'updateProfile') {
+        try {
+            $ctrl = new ProfileController($conn);
+            $ctrl->updateProfile();
+            exit;
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ]);
+            exit;
         }
     }
+
+    if ($page === 'generate') {
+        $input = json_decode(file_get_contents('php://input'), true);
+        try {
+            $generatorController = new GeneratorController($conn);
+            $response = $generatorController->handleRequest($input['type'], $input['array'], $input);
+            echo json_encode($response);
+            exit;
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Controller error: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+
+    if ($action === 'checkPassword') {
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['username']) || !isset($data['password'])) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Missing required parameters'
+                ]);
+                exit;
+            }
+            
+            $ctrl = new ProfileController($conn);
+            $ctrl->checkPassword($data['username'],$data['password']);
+            exit;
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Password check failed: ' . $e->getMessage()
+            ]);
+            exit;
+        }
+    }
+
     echo json_encode(['success' => false, 'message' => 'Route not found']);
     exit;
+}
+
+if ($method === 'DELETE') {
+    $action = $_GET['action'] ?? '';
+
+    if ($action === 'deleteAccount') {
+        try {
+            $ctrl = new ProfileController($conn);
+            $ctrl->deleteAccount();
+            exit;
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ]);
+            exit;
+        }
+    }
 }

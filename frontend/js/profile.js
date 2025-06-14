@@ -1,97 +1,457 @@
+class ProfileManager {
+    constructor() {
+        this.elements = {
+            statsBtn: document.getElementById('statsButton'),
+            editBtn: document.getElementById('editButton'),
+            expandedPanel: document.getElementById('expandedPanel'),
+            panelContent: document.getElementById('panelContent'),
+            closeBtn: document.getElementById('closePanel'),
+            overlay: document.querySelector('.overlay'),
+            profileContainer: document.querySelector('.profile-container'),
+            usernameEl: document.querySelector('.user-name'),
+            logoutBtn: document.querySelector('.logout-button'),
+            deleteBtn: document.getElementById('deleteBtn')
+        };
 
-document.addEventListener('DOMContentLoaded', async() => {
-  const btn  = document.getElementById('statsButton');
-  const card = document.querySelector('.profile-container');
-  const usernameEl = document.querySelector('.user-name');
+        this.endpoints = {
+            username: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUsername',
+            userData: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUserData',
+            updateProfile: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=updateProfile',
+            stats: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution',
+            logout: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=logout',
+            delete: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=deleteAccount',
+            checkPassword: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=checkPassword'
+        };
 
-  try {
-    const res = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUsername', {
-      credentials: 'include'
-    });
-
-    const json = await res.json();
-
-    if (res.ok && json.username && usernameEl) {
-      usernameEl.textContent = json.username;
-    } else {
-      console.warn('Nu s-a putut obține username-ul:', json.error || 'necunoscut');
+        window.profileManager = this;
+        this.init();
     }
-  } catch (err) {
-    console.error('Eroare la obținerea username-ului:', err);
-  }
-  
-  const buildBars = rows => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'bar-list';
 
-    const palette = ['#007bff', '#ff4757', '#ffa502', '#2ed573', '#8e44ad'];
-
-    rows.forEach((r, idx) => {
-      const row = document.createElement('div');
-      row.className = 'bar-row';
-
- 
-      const label = document.createElement('span');
-      label.className = 'bar-label';
-      label.textContent = r.TYPE;
-      row.appendChild(label);
-
-      const track = document.createElement('div');
-      track.className = 'bar-track';
-
-      const fill  = document.createElement('div');
-      fill.className = 'bar-fill';
-      fill.style.width = `${r.PERCENTAGE}%`;
-      fill.style.background = palette[idx % palette.length];
-
-      track.appendChild(fill);
-      row.appendChild(track);
-
-     
-      const value = document.createElement('span');
-      value.className = 'bar-value';
-      value.textContent = `${r.TYPE_COUNT} (${r.PERCENTAGE}%)`;
-      row.appendChild(value);
-
-      wrapper.appendChild(row);
-    });
-    return wrapper;
-  };
-
-  btn.addEventListener('click', async () => {
-
-    Array.from(document.body.children).forEach(el => { if (el !== card) el.remove(); });
-    card.replaceChildren();
-    card.style.minHeight = '85vh';
-    card.style.padding   = '2rem';
-
-    const loader = document.createElement('p');
-    loader.textContent = 'Se încarcă…';
-    card.appendChild(loader);
-
-    try {
-      const res  = await fetch("/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution", { credentials: 'include' });
-      const json = await res.json();
-      console.log('STATISTIC DATA →', json.data);   
-
-      if (!res.ok) throw new Error(json.error || 'Eroare necunoscută');
-
-      card.replaceChildren();
-      const h3 = document.createElement('h3');
-      h3.textContent = 'Statistics';
-      card.appendChild(h3);
-
-      if (!json.data.length) {
-        card.appendChild(document.createTextNode('Nu există date statistice.'));
-        return;
-      }
-
-      card.appendChild(buildBars(json.data));
-
-    } catch (err) {
-      card.replaceChildren();
-      card.textContent = err.message;
-      console.error(err);
+    async init() {
+        await this.loadUsername();
+        this.setupEventListeners();
+        this.setupCloseButton();
     }
-  });
+
+    async loadUsername() {
+        try {
+            const res = await fetch(this.endpoints.username, {
+                credentials: 'include'
+            });
+            const json = await res.json();
+
+            if (res.ok && json.username && this.elements.usernameEl) {
+                this.elements.usernameEl.textContent = json.username;
+            }
+        } catch (err) {
+            console.error('Error loading username:', err);
+        }
+    }
+
+    setupEventListeners() {
+        if (this.elements.statsBtn) {
+            this.elements.statsBtn.addEventListener('click', () => this.handleStatsClick());
+        }
+
+        if (this.elements.editBtn) {
+            this.elements.editBtn.addEventListener('click', () => this.handleEditClick());
+        }
+
+        if (this.elements.logoutBtn) {
+            this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+
+        if (this.elements.deleteBtn) {
+            this.elements.deleteBtn.addEventListener('click', () => this.handleDeleteAccount());
+        }
+
+        document.addEventListener('click', (e) => this.handleOutsideClick(e));
+    }
+
+    setupCloseButton() {
+        if (this.elements.closeBtn) {
+            this.elements.closeBtn.innerHTML = '×';
+            this.elements.closeBtn.addEventListener('click', () => this.closePanel());
+        }
+    }
+
+    async handleStatsClick() {
+        if (this.elements.expandedPanel.classList.contains('active')) {
+            this.closePanel();
+            return;
+        }
+
+        this.openPanel();
+        await this.loadStatistics();
+    }
+
+    async handleEditClick() {
+        if (this.elements.expandedPanel.classList.contains('active')) {
+            this.closePanel();
+            return;
+        }
+
+        this.openPanel();
+        await this.loadEditForm();
+    }
+
+    handleOutsideClick(e) {
+        if (this.elements.expandedPanel.classList.contains('active') &&
+            !this.elements.expandedPanel.contains(e.target) &&
+            !this.elements.statsBtn.contains(e.target) &&
+            !this.elements.editBtn.contains(e.target)) {
+            this.closePanel();
+        }
+    }
+
+    openPanel() {
+        this.elements.expandedPanel.classList.add('active');
+        this.elements.profileContainer.classList.add('panel-open');
+        if (this.elements.overlay) this.elements.overlay.classList.add('active');
+    }
+
+    closePanel() {
+        this.elements.expandedPanel.classList.remove('active');
+        this.elements.profileContainer.classList.remove('panel-open');
+        if (this.elements.overlay) this.elements.overlay.classList.remove('active');
+        this.elements.statsBtn.classList.remove('active');
+        this.elements.editBtn.classList.remove('active');
+
+        setTimeout(() => {
+            this.elements.panelContent.innerHTML = '';
+        }, 300);
+    }
+
+    async loadStatistics() {
+        this.elements.panelContent.innerHTML = '<p class="stats-loading">Se încarcă statisticile...</p>';
+
+        try {
+            const res = await fetch(this.endpoints.stats, { credentials: 'include' });
+            const json = await res.json();
+
+            if (!res.ok) throw new Error(json.error || 'Unknown error');
+
+            this.renderStatistics(json.data);
+        } catch (err) {
+            this.showError(err.message);
+        }
+    }
+
+    renderStatistics(data) {
+        this.elements.panelContent.innerHTML = '';
+
+        const header = document.createElement('h3');
+        header.className = 'stats-header';
+        header.textContent = 'Statistics';
+        this.elements.panelContent.appendChild(header);
+
+        if (!data || !data.length) {
+            const emptyMsg = document.createElement('p');
+            emptyMsg.className = 'stats-empty';
+            emptyMsg.textContent = 'No statistical data available.';
+            this.elements.panelContent.appendChild(emptyMsg);
+            return;
+        }
+
+        this.elements.panelContent.appendChild(this.buildBars(data));
+    }
+
+    buildBars(rows) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bar-list';
+        const palette = ['#007bff', '#ff4757', '#ffa502', '#2ed573', '#8e44ad'];
+
+        rows.forEach((row, idx) => {
+            const barRow = this.createBarRow(row, palette[idx % palette.length], idx);
+            wrapper.appendChild(barRow);
+        });
+
+        return wrapper;
+    }
+
+    createBarRow(data, color, index) {
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+
+        const label = document.createElement('span');
+        label.className = 'bar-label';
+        label.textContent = data.TYPE;
+
+        const track = document.createElement('div');
+        track.className = 'bar-track';
+
+        const fill = document.createElement('div');
+        fill.className = 'bar-fill';
+        fill.style.width = '0%';
+        fill.style.background = color;
+
+        const value = document.createElement('span');
+        value.className = 'bar-value';
+        value.textContent = `${data.TYPE_COUNT} (${data.PERCENTAGE}%)`;
+
+        track.appendChild(fill);
+        row.append(label, track, value);
+
+        setTimeout(() => {
+            fill.style.width = `${data.PERCENTAGE}%`;
+        }, 100 + (index * 50));
+
+        return row;
+    }
+
+    async loadEditForm() {
+        const formHTML = this.getEditFormTemplate();
+        this.elements.panelContent.innerHTML = formHTML;
+
+        const form = document.getElementById('editProfileForm');
+        await this.populateForm();
+        form.addEventListener('submit', (e) => this.handleFormSubmit(e));
+    }
+
+    getEditFormTemplate() {
+        return `
+            <h3 class="stats-header">Edit Profile</h3>
+            <form id="editProfileForm" class="edit-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" 
+                        autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" 
+                        autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" name="currentPassword" class="form-input" 
+                        autocomplete="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="newPassword">New Password (leave blank if unchanged)</label>
+                    <input type="password" id="newPassword" name="newPassword" class="form-input"
+                        autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                        autocomplete="new-password">
+                </div>
+                <button type="submit" class="submit-button">Save Changes</button>
+            </form>
+        `;
+    }
+
+    async populateForm() {
+        try {
+            const res = await fetch(this.endpoints.userData, {
+                credentials: 'include'
+            });
+            const userData = await res.json();
+
+            if (res.ok && userData) {
+                document.getElementById('username').value = userData.username || '';
+                document.getElementById('email').value = userData.email || '';
+            }
+        } catch (err) {
+            console.error('Error loading user data:', err);
+            this.showFormError('Failed to load user data');
+        }
+    }
+
+    async handleFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = {
+            username: form.username.value,
+            email: form.email.value,
+            currentPassword: form.currentPassword.value,
+            newPassword: form.newPassword.value,
+            confirmPassword: form.confirmPassword.value
+        };
+
+        if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+            this.showFormError('New passwords do not match');
+            return;
+        }
+
+        try {
+            const res = await fetch(this.endpoints.updateProfile, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+                credentials: 'include'
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                this.showFormSuccess('Profile updated successfully');
+                if (formData.username !== this.elements.usernameEl.textContent) {
+                    this.elements.usernameEl.textContent = formData.username;
+                }
+            } else {
+                this.showFormError(data.error || 'Failed to update profile');
+            }
+        } catch (err) {
+            this.showFormError('An error occurred. Please try again.');
+            console.error(err);
+        }
+    }
+
+    async handleLogout() {
+        try {
+            console.log('Logout clicked');
+
+            const response = await fetch(this.endpoints.logout, {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Logout failed');
+            }
+
+            document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+            window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
+        } catch (err) {
+            console.error('Logout error:', err);
+            alert('Failed to logout. Please try again.');
+        }
+    }
+
+    showDeleteConfirmModal() {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'delete-modal';
+            modal.innerHTML = `
+                <form id="deleteAccountForm">
+                    <input 
+                        type="text"
+                        name="username"
+                        id="username"
+                        value="<?php echo isset($_SESSION['username']) ? $_SESSION['username'] : ''; ?>"
+                        autocomplete="username"
+                        class="hidden-username"
+                    >
+                    <div class="delete-modal-content">
+                        <h3>Confirm Account Deletion</h3>
+                        <p>Please enter your password to confirm account deletion:</p>
+                        <input type="password" id="deleteConfirmPassword" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+                        <div class="modal-buttons">
+                            <button class="submit-button confirm-delete" type="submit">Delete Account</button>
+                            <button class="cancel-button" type="button">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            document.body.appendChild(modal);
+
+            const form = modal.querySelector('#deleteAccountForm');
+            const cancelBtn = modal.querySelector('.cancel-button');
+            const input = modal.querySelector('#deleteConfirmPassword');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const password = input.value;
+                modal.remove();
+                resolve(password);
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                modal.remove();
+                resolve(null);
+            });
+
+            input.focus();
+        });
+    }
+
+    async handleDeleteAccount() {
+        try {
+            const userResponse = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUserData');
+            const userData = await userResponse.json();
+
+            if (!userData.success) {
+                alert('Failed to verify user session');
+                return;
+            }
+
+            const username = userData.username;
+
+            const password = await this.showDeleteConfirmModal();
+            if (!password) {
+                return;
+            }
+
+            const passwordCheck = await fetch(this.endpoints.checkPassword, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            const passwordResult = await passwordCheck.json();
+            if (!passwordResult.success) {
+                alert('Incorrect password. Please try again.');
+                return;
+            }
+
+            const response = await fetch(this.endpoints.delete, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Delete account failed');
+            }
+
+            window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
+        } catch (err) {
+            console.error('Delete account error: ', err);
+            alert('Failed to delete account. Please try again.');
+        }
+    }
+
+    showFormError(message) {
+        const existingError = document.querySelector('.form-error');
+        if (existingError) existingError.remove();
+
+        const error = document.createElement('div');
+        error.className = 'form-error';
+        error.textContent = message;
+
+        const form = document.getElementById('editProfileForm');
+        form.insertBefore(error, form.querySelector('.submit-button'));
+    }
+
+    showFormSuccess(message) {
+        const existingSuccess = document.querySelector('.form-success');
+        if (existingSuccess) existingSuccess.remove();
+
+        const success = document.createElement('div');
+        success.className = 'form-success';
+        success.textContent = message;
+
+        const form = document.getElementById('editProfileForm');
+        form.insertBefore(success, form.firstChild);
+    }
+
+    showError(message) {
+        this.elements.panelContent.innerHTML = '';
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'stats-error';
+        errorMsg.textContent = `Error: ${message}`;
+        this.elements.panelContent.appendChild(errorMsg);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new ProfileManager();
 });

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/templates/profile.css">
+</head>
+<body>
+    <main class="main-content">
+        <div class="profile-container">
+            <h1 class="user-name"></h1>
+            
+            <div class="buttons-container">
+                <button id="statsButton" class="profile-button">
+                    Statistics
+                </button>
+                <button id="editButton" class="profile-button">
+                    Edit Profile
+                </button>
+                 <button id="historyButton" class="profile-button">
+                    History
+                </button>
+                <button id="logoutBtn" class="profile-button logout-button">
+                    Logout
+                </button>
+                <button id="deleteBtn" class="profile-button logout-button">
+                    Delete Account
+                </button>
+            </div>
+        </div>
+
+        <div class="expanded-panel" id="expandedPanel">
+            <button class="close-button" id="closePanel"></button>
+            <div class="panel-content" id="panelContent"></div>
+        </div>
+
+        <div class="overlay"></div>
+    </main>
+
+    <script src="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/js/profile.js"></script>
+</body>
+</html>
