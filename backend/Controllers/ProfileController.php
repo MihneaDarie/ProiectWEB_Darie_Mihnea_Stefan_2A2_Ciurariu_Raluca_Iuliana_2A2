@@ -195,6 +195,22 @@ class ProfileController extends Controller
         }
     }
 
+    public function checkPassword(string $username, string $password) {
+        try {
+            if (empty($username) || empty($password)) {
+                return $this->jsonResponse(false, 'Missing username or password');
+            }
+            $isValid = $this->model->checkPassword($username, $password);
+
+            return $this->jsonResponse([
+                'success' => $isValid, 
+                'message' => $isValid ? 'Password is correct' : 'Invalid password'
+            ]);
+        } catch (Exception $e) {
+            return $this->jsonResponse(false, $e->getMessage());
+        }
+    }
+
     public function deleteAccount(): void
     {
         header('Content-Type: application/json; charset=UTF-8');

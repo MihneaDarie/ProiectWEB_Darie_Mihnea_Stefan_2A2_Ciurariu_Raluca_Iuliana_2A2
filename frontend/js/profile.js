@@ -19,7 +19,8 @@ class ProfileManager {
             updateProfile: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=updateProfile',
             stats: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution',
             logout: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=logout',
-            delete: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=deleteAccount'
+            delete: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=deleteAccount',
+            checkPassword: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=checkPassword'
         };
 
         window.profileManager = this;
@@ -320,9 +321,87 @@ class ProfileManager {
         }
     }
 
+    showDeleteConfirmModal() {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'delete-modal';
+            modal.innerHTML = `
+                <form id="deleteAccountForm">
+                    <input 
+                        type="text"
+                        name="username"
+                        id="username"
+                        value="<?php echo isset($_SESSION['username']) ? $_SESSION['username'] : ''; ?>"
+                        autocomplete="username"
+                        class="hidden-username"
+                    >
+                    <div class="delete-modal-content">
+                        <h3>Confirm Account Deletion</h3>
+                        <p>Please enter your password to confirm account deletion:</p>
+                        <input type="password" id="deleteConfirmPassword" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+                        <div class="modal-buttons">
+                            <button class="submit-button confirm-delete" type="submit">Delete Account</button>
+                            <button class="cancel-button" type="button">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            document.body.appendChild(modal);
+
+            const form = modal.querySelector('#deleteAccountForm');
+            const cancelBtn = modal.querySelector('.cancel-button');
+            const input = modal.querySelector('#deleteConfirmPassword');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const password = input.value;
+                modal.remove();
+                resolve(password);
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                modal.remove();
+                resolve(null);
+            });
+
+            input.focus();
+        });
+    }
+
     async handleDeleteAccount() {
         try {
-            console.log('Delete account clicked !');
+            const userResponse = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUserData');
+            const userData = await userResponse.json();
+
+            if (!userData.success) {
+                alert('Failed to verify user session');
+                return;
+            }
+
+            const username = userData.username;
+
+            const password = await this.showDeleteConfirmModal();
+            if (!password) {
+                return;
+            }
+
+            const passwordCheck = await fetch(this.endpoints.checkPassword, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            const passwordResult = await passwordCheck.json();
+            if (!passwordResult.success) {
+                alert('Incorrect password. Please try again.');
+                return;
+            }
 
             const response = await fetch(this.endpoints.delete, {
                 method: 'DELETE',
@@ -336,7 +415,7 @@ class ProfileManager {
             window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
         } catch (err) {
             console.error('Delete account error: ', err);
-            alert('Failed to logout. Please try again.');
+            alert('Failed to delete account. Please try again.');
         }
     }
 

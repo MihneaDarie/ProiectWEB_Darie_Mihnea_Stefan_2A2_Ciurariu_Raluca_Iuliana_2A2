@@ -145,6 +145,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if ($action === 'checkPassword') {
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['username']) || !isset($data['password'])) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Missing required parameters'
+                ]);
+                exit;
+            }
+            
+            $ctrl = new ProfileController($conn);
+            $ctrl->checkPassword($data['username'],$data['password']);
+            exit;
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Password check failed: ' . $e->getMessage()
+            ]);
+            exit;
+        }
+    }
+
     echo json_encode(['success' => false, 'message' => 'Route not found']);
     exit;
 }

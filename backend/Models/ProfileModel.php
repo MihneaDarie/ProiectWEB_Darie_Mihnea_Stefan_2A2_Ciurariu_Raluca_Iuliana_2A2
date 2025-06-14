@@ -144,11 +144,11 @@ class ProfileModel extends Model
             $getUserIdSql = "SELECT id FROM users WHERE username = :username";
             $stmtUserId = oci_parse($this->connection, $getUserIdSql);
             oci_bind_by_name($stmtUserId, ":username", $username);
-            
+
             if (!oci_execute($stmtUserId)) {
                 throw new Exception(oci_error($stmtUserId)['message']);
             }
-            
+
             $row = oci_fetch_assoc($stmtUserId);
             if (!$row) {
                 throw new Exception('User not found');
@@ -158,7 +158,7 @@ class ProfileModel extends Model
             $getDatasetsSql = "SELECT id FROM data_set WHERE user_id = :user_id";
             $stmtDatasets = oci_parse($this->connection, $getDatasetsSql);
             oci_bind_by_name($stmtDatasets, ":user_id", $userId);
-            
+
             if (!oci_execute($stmtDatasets)) {
                 throw new Exception(oci_error($stmtDatasets)['message']);
             }
@@ -170,7 +170,7 @@ class ProfileModel extends Model
 
             if (!empty($datasetIds)) {
                 $idList = implode(',', $datasetIds);
-                
+
                 $dependentTables = [
                     'graph',
                     'tree',
@@ -203,10 +203,35 @@ class ProfileModel extends Model
 
             oci_commit($this->connection);
             return true;
-            
+
         } catch (Exception $e) {
             oci_rollback($this->connection);
             throw $e;
         }
     }
+    public function checkPassword(string $username, string $password): bool
+    {
+        try {
+            $sql = "SELECT password FROM users WHERE username = :username";
+            $stmt = oci_parse($this->connection, $sql);
+            oci_bind_by_name($stmt, ":username", $username);
+
+            if (!oci_execute($stmt)) {
+                $error = oci_error($stmt);
+                throw new Exception($error['message']);
+            }
+
+            $row = oci_fetch_assoc($stmt);
+            if (!$row) {
+                throw new Exception('User not found');
+            }
+            return password_verify($password, $row['PASSWORD']);
+        } catch (Exception $e) {
+            if ($this->connection) {
+                oci_rollback($this->connection);
+            }
+            throw $e;
+        }
+    }
+
 }
