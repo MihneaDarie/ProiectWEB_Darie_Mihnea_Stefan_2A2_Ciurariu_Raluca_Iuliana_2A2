@@ -9,7 +9,8 @@ class ProfileManager {
             overlay: document.querySelector('.overlay'),
             profileContainer: document.querySelector('.profile-container'),
             usernameEl: document.querySelector('.user-name'),
-            logoutBtn: document.querySelector('.logout-button')
+            logoutBtn: document.querySelector('.logout-button'),
+            deleteBtn: document.getElementById('deleteBtn')
         };
 
         this.endpoints = {
@@ -17,10 +18,10 @@ class ProfileManager {
             userData: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUserData',
             updateProfile: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=updateProfile',
             stats: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution',
-            logout: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=logout'
+            logout: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=logout',
+            delete: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=deleteAccount'
         };
 
-        // Make the instance available globally
         window.profileManager = this;
         this.init();
     }
@@ -55,9 +56,12 @@ class ProfileManager {
             this.elements.editBtn.addEventListener('click', () => this.handleEditClick());
         }
 
-        // Add logout button to elements
         if (this.elements.logoutBtn) {
             this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+
+        if (this.elements.deleteBtn) {
+            this.elements.deleteBtn.addEventListener('click', () => this.handleDeleteAccount());
         }
 
         document.addEventListener('click', (e) => this.handleOutsideClick(e));
@@ -91,8 +95,8 @@ class ProfileManager {
     }
 
     handleOutsideClick(e) {
-        if (this.elements.expandedPanel.classList.contains('active') && 
-            !this.elements.expandedPanel.contains(e.target) && 
+        if (this.elements.expandedPanel.classList.contains('active') &&
+            !this.elements.expandedPanel.contains(e.target) &&
             !this.elements.statsBtn.contains(e.target) &&
             !this.elements.editBtn.contains(e.target)) {
             this.closePanel();
@@ -111,7 +115,7 @@ class ProfileManager {
         if (this.elements.overlay) this.elements.overlay.classList.remove('active');
         this.elements.statsBtn.classList.remove('active');
         this.elements.editBtn.classList.remove('active');
-        
+
         setTimeout(() => {
             this.elements.panelContent.innerHTML = '';
         }, 300);
@@ -134,7 +138,7 @@ class ProfileManager {
 
     renderStatistics(data) {
         this.elements.panelContent.innerHTML = '';
-        
+
         const header = document.createElement('h3');
         header.className = 'stats-header';
         header.textContent = 'Statistics';
@@ -233,13 +237,6 @@ class ProfileManager {
                         autocomplete="new-password">
                 </div>
                 <button type="submit" class="submit-button">Save Changes</button>
-                <button 
-                    type="button" 
-                    class="logout-button" 
-                    id="logoutButton" 
-                    onclick="window.profileManager.handleLogout()">
-                    Logout
-                </button>
             </form>
         `;
     }
@@ -250,7 +247,7 @@ class ProfileManager {
                 credentials: 'include'
             });
             const userData = await res.json();
-            
+
             if (res.ok && userData) {
                 document.getElementById('username').value = userData.username || '';
                 document.getElementById('email').value = userData.email || '';
@@ -304,7 +301,7 @@ class ProfileManager {
     async handleLogout() {
         try {
             console.log('Logout clicked');
-            
+
             const response = await fetch(this.endpoints.logout, {
                 method: 'GET',
                 credentials: 'include'
@@ -315,10 +312,30 @@ class ProfileManager {
             }
 
             document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            
+
             window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
         } catch (err) {
             console.error('Logout error:', err);
+            alert('Failed to logout. Please try again.');
+        }
+    }
+
+    async handleDeleteAccount() {
+        try {
+            console.log('Delete account clicked !');
+
+            const response = await fetch(this.endpoints.delete, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Delete account failed');
+            }
+
+            window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
+        } catch (err) {
+            console.error('Delete account error: ', err);
             alert('Failed to logout. Please try again.');
         }
     }
@@ -330,7 +347,7 @@ class ProfileManager {
         const error = document.createElement('div');
         error.className = 'form-error';
         error.textContent = message;
-        
+
         const form = document.getElementById('editProfileForm');
         form.insertBefore(error, form.querySelector('.submit-button'));
     }
@@ -342,7 +359,7 @@ class ProfileManager {
         const success = document.createElement('div');
         success.className = 'form-success';
         success.textContent = message;
-        
+
         const form = document.getElementById('editProfileForm');
         form.insertBefore(success, form.firstChild);
     }

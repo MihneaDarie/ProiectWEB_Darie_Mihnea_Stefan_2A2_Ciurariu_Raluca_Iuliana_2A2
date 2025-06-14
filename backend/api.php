@@ -3,10 +3,10 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $env = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $env->load();
 
- require_once __DIR__ . '/Controllers/RegisterController.php';
- require_once __DIR__ . '/Controllers/LoginController.php';
- require_once __DIR__ . '/Controllers/GeneratorController.php';
- require_once __DIR__ . '/Controllers/ProfileController.php'; 
+require_once __DIR__ . '/Controllers/RegisterController.php';
+require_once __DIR__ . '/Controllers/LoginController.php';
+require_once __DIR__ . '/Controllers/GeneratorController.php';
+require_once __DIR__ . '/Controllers/ProfileController.php';
 
 
 header('Content-Type: application/json');
@@ -18,14 +18,14 @@ if (!$conn) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$page   = $_GET['page'] ?? '';              
-$input  = json_decode(file_get_contents('php://input'), true) ?? [];
+$page = $_GET['page'] ?? '';
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
 
 if ($method === 'POST' && $page === 'register') {
-    $username      = $input['username']      ?? '';
-    $password      = $input['password']      ?? '';
+    $username = $input['username'] ?? '';
+    $password = $input['password'] ?? '';
     $copy_password = $input['copy_password'] ?? '';
-    $email         = $input['email']         ?? '';
+    $email = $input['email'] ?? '';
     $registerController = new RegisterController($conn);
     $response = $registerController->register_user($username, $password, $copy_password, $email);
     echo json_encode($response);
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'httponly' => true,
             'samesite' => 'Strict'
         ]);
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Logged out successfully'
@@ -99,10 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $page = $_GET['page'] ?? '';
 
     if ($page === 'register') {
-        $username      = $input['username']      ?? '';
-        $password      = $input['password']      ?? '';
+        $username = $input['username'] ?? '';
+        $password = $input['password'] ?? '';
         $copy_password = $input['copy_password'] ?? '';
-        $email         = $input['email']         ?? '';
+        $email = $input['email'] ?? '';
         $registerController = new RegisterController($conn);
         $response = $registerController->register_user($username, $password, $copy_password, $email);
         echo json_encode($response);
@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($page === 'generate') {
-        $input = json_decode(file_get_contents('php://input'), true);           
+        $input = json_decode(file_get_contents('php://input'), true);
         try {
             $generatorController = new GeneratorController($conn);
             $response = $generatorController->handleRequest($input['type'], $input['array'], $input);
@@ -147,4 +147,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     echo json_encode(['success' => false, 'message' => 'Route not found']);
     exit;
+}
+
+if ($method === 'DELETE') {
+    $action = $_GET['action'] ?? '';
+
+    if ($action === 'deleteAccount') {
+        try {
+            $ctrl = new ProfileController($conn);
+            $ctrl->deleteAccount();
+            exit;
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ]);
+            exit;
+        }
+    }
 }
