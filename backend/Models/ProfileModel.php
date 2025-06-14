@@ -236,16 +236,18 @@ class ProfileModel extends Model
         return $result;
     }
 
-    public function updateUser(string $currentUsername, array $data): bool 
+    public function updateUser(string $currentUsername, array $data): bool
     {
         try {
             $sql = "SELECT password FROM users WHERE username = :username";
             $stmt = oci_parse($this->connection, $sql);
             oci_bind_by_name($stmt, ":username", $currentUsername);
 
+
             if (!oci_execute($stmt)) {
                 throw new Exception(oci_error($stmt)['message']);
             }
+
 
             $user = oci_fetch_assoc($stmt);
             if (!$user || !password_verify($data['currentPassword'], $user['PASSWORD'])) {
@@ -259,9 +261,11 @@ class ProfileModel extends Model
                 $checkStmt = oci_parse($this->connection, $checkSql);
                 oci_bind_by_name($checkStmt, ":username", $data['username']);
 
+
                 if (!oci_execute($checkStmt)) {
                     throw new Exception(oci_error($checkStmt)['message']);
                 }
+
 
                 if (oci_fetch_assoc($checkStmt)) {
                     throw new Exception('Username already taken');
@@ -270,6 +274,7 @@ class ProfileModel extends Model
 
             $updates = [];
             $sql = "UPDATE users SET ";
+
 
             if ($data['username'] !== $currentUsername) {
                 $updates[] = "username = :new_username";
@@ -281,6 +286,7 @@ class ProfileModel extends Model
                 $updates[] = "password = :new_password";
             }
 
+
             if (empty($updates)) {
                 return true;
             }
@@ -288,7 +294,9 @@ class ProfileModel extends Model
             $sql .= implode(", ", $updates);
             $sql .= " WHERE username = :current_username";
 
+
             $stmt = oci_parse($this->connection, $sql);
+
 
             if ($data['username'] !== $currentUsername) {
                 oci_bind_by_name($stmt, ":new_username", $data['username']);
@@ -301,6 +309,7 @@ class ProfileModel extends Model
                 oci_bind_by_name($stmt, ":new_password", $hash);
             }
             oci_bind_by_name($stmt, ":current_username", $currentUsername);
+
 
             if (!oci_execute($stmt)) {
                 oci_rollback($this->connection);

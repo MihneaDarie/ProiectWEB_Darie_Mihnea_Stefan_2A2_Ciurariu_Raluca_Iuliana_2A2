@@ -10,6 +10,7 @@ class ProfileManager {
             profileContainer: document.querySelector('.profile-container'),
             usernameEl: document.querySelector('.user-name'),
             logoutBtn: document.querySelector('.logout-button'),
+            deleteBtn: document.getElementById('deleteBtn'),
             historyBtn: document.getElementById('historyButton')
         };
 
@@ -18,9 +19,7 @@ class ProfileManager {
             userData: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUserData',
             updateProfile: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=updateProfile',
             stats: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=distribution',
-            logout: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=logout',
-            history: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=history',
-            dataset: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getDataSet'
+            logout: '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=logout'
         };
 
         this.currentView = null;
@@ -62,6 +61,10 @@ class ProfileManager {
 
         if (this.elements.logoutBtn) {
             this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+
+        if (this.elements.deleteBtn) {
+            this.elements.deleteBtn.addEventListener('click', () => this.handleDeleteAccount());
         }
         
         if (this.elements.historyBtn) {
@@ -594,8 +597,8 @@ formatParsedOutputSafe(type, rawData) {
             return;
         }
         
-        if (this.elements.expandedPanel.classList.contains('active') && 
-            !this.elements.expandedPanel.contains(e.target) && 
+        if (this.elements.expandedPanel.classList.contains('active') &&
+            !this.elements.expandedPanel.contains(e.target) &&
             !this.elements.statsBtn.contains(e.target) &&
             !this.elements.editBtn.contains(e.target) &&
             !this.elements.historyBtn.contains(e.target)) {
@@ -617,6 +620,7 @@ formatParsedOutputSafe(type, rawData) {
         this.elements.editBtn.classList.remove('active');
         this.elements.historyBtn.classList.remove('active');
         
+
         setTimeout(() => {
             this.elements.panelContent.innerHTML = '';
         }, 300);
@@ -639,7 +643,7 @@ formatParsedOutputSafe(type, rawData) {
 
     renderStatistics(data) {
         this.elements.panelContent.innerHTML = '';
-        
+
         const header = document.createElement('h3');
         header.className = 'stats-header';
         header.textContent = 'Statistics';
@@ -738,13 +742,6 @@ formatParsedOutputSafe(type, rawData) {
                         autocomplete="new-password">
                 </div>
                 <button type="submit" class="submit-button">Save Changes</button>
-                <button 
-                    type="button" 
-                    class="logout-button" 
-                    id="logoutButton" 
-                    onclick="window.profileManager.handleLogout()">
-                    Logout
-                </button>
             </form>
         `;
     }
@@ -755,7 +752,7 @@ formatParsedOutputSafe(type, rawData) {
                 credentials: 'include'
             });
             const userData = await res.json();
-            
+
             if (res.ok && userData) {
                 document.getElementById('username').value = userData.username || '';
                 document.getElementById('email').value = userData.email || '';
@@ -809,7 +806,7 @@ formatParsedOutputSafe(type, rawData) {
     async handleLogout() {
         try {
             console.log('Logout clicked');
-            
+
             const response = await fetch(this.endpoints.logout, {
                 method: 'GET',
                 credentials: 'include'
@@ -820,11 +817,109 @@ formatParsedOutputSafe(type, rawData) {
             }
 
             document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            
+
             window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
         } catch (err) {
             console.error('Logout error:', err);
             alert('Failed to logout. Please try again.');
+        }
+    }
+
+    showDeleteConfirmModal() {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'delete-modal';
+            modal.innerHTML = `
+                <form id="deleteAccountForm">
+                    <input 
+                        type="text"
+                        name="username"
+                        id="username"
+                        value="<?php echo isset($_SESSION['username']) ? $_SESSION['username'] : ''; ?>"
+                        autocomplete="username"
+                        class="hidden-username"
+                    >
+                    <div class="delete-modal-content">
+                        <h3>Confirm Account Deletion</h3>
+                        <p>Please enter your password to confirm account deletion:</p>
+                        <input type="password" id="deleteConfirmPassword" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+                        <div class="modal-buttons">
+                            <button class="submit-button confirm-delete" type="submit">Delete Account</button>
+                            <button class="cancel-button" type="button">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            document.body.appendChild(modal);
+
+            const form = modal.querySelector('#deleteAccountForm');
+            const cancelBtn = modal.querySelector('.cancel-button');
+            const input = modal.querySelector('#deleteConfirmPassword');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const password = input.value;
+                modal.remove();
+                resolve(password);
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                modal.remove();
+                resolve(null);
+            });
+
+            input.focus();
+        });
+    }
+
+    async handleDeleteAccount() {
+        try {
+            const userResponse = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?action=getUserData');
+            const userData = await userResponse.json();
+
+            if (!userData.success) {
+                alert('Failed to verify user session');
+                return;
+            }
+
+            const username = userData.username;
+
+            const password = await this.showDeleteConfirmModal();
+            if (!password) {
+                return;
+            }
+
+            const passwordCheck = await fetch(this.endpoints.checkPassword, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            const passwordResult = await passwordCheck.json();
+            if (!passwordResult.success) {
+                alert('Incorrect password. Please try again.');
+                return;
+            }
+
+            const response = await fetch(this.endpoints.delete, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Delete account failed');
+            }
+
+            window.location.replace('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=login');
+        } catch (err) {
+            console.error('Delete account error: ', err);
+            alert('Failed to delete account. Please try again.');
         }
     }
 
@@ -835,7 +930,7 @@ formatParsedOutputSafe(type, rawData) {
         const error = document.createElement('div');
         error.className = 'form-error';
         error.textContent = message;
-        
+
         const form = document.getElementById('editProfileForm');
         form.insertBefore(error, form.querySelector('.submit-button'));
     }
@@ -847,7 +942,7 @@ formatParsedOutputSafe(type, rawData) {
         const success = document.createElement('div');
         success.className = 'form-success';
         success.textContent = message;
-        
+
         const form = document.getElementById('editProfileForm');
         form.insertBefore(success, form.firstChild);
     }

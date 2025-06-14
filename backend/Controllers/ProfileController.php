@@ -27,14 +27,14 @@ class ProfileController extends Controller
             }
 
             $payload = JWT::decode($jwt, new Key($this->jwtSecret, 'HS256'));
-            $username = $payload->username ?? null;    
+            $username = $payload->username ?? null;
 
             if (!$username) {
                 $this->jsonResponse(['success' => false, 'message' => 'Username absent în token'], 401);
             }
 
             $data = $this->model->getUserDataDistributionByUsername($username);
-            $this->jsonResponse(['success' => true, 'data' => $data]);      
+            $this->jsonResponse(['success' => true, 'data' => $data]);
         } catch (\Throwable $e) {
             $this->jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -58,13 +58,13 @@ class ProfileController extends Controller
             }
 
             $this->jsonResponse([
-                'success' => true, 
+                'success' => true,
                 'username' => $username
             ]);
 
         } catch (\Throwable $e) {
             $this->jsonResponse([
-                'success' => false, 
+                'success' => false,
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -157,15 +157,15 @@ class ProfileController extends Controller
         }
     }
 
-    public function getUserData(): void 
+    public function getUserData(): void
     {
         header('Content-Type: application/json; charset=UTF-8');
-        
+
         try {
             $jwt = $_COOKIE['jwt'] ?? null;
             if (!$jwt) {
                 $this->jsonResponse([
-                    'success' => false, 
+                    'success' => false,
                     'error' => 'Authentication required'
                 ], 401);
                 return;
@@ -176,14 +176,14 @@ class ProfileController extends Controller
 
             if (!$username) {
                 $this->jsonResponse([
-                    'success' => false, 
+                    'success' => false,
                     'error' => 'Invalid token'
                 ], 401);
                 return;
             }
 
             $userData = $this->model->getUserData($username);
-            
+
             if (!$userData) {
                 $this->jsonResponse([
                     'success' => false,
@@ -197,7 +197,7 @@ class ProfileController extends Controller
                 'username' => $userData['USERNAME'],
                 'email' => $userData['EMAIL']
             ]);
-            
+
         } catch (\Throwable $e) {
             error_log($e->getMessage());
             $this->jsonResponse([
@@ -207,15 +207,15 @@ class ProfileController extends Controller
         }
     }
 
-    public function updateProfile(): void 
+    public function updateProfile(): void
     {
         header('Content-Type: application/json; charset=UTF-8');
-        
+
         try {
             $jwt = $_COOKIE['jwt'] ?? null;
             if (!$jwt) {
                 $this->jsonResponse([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Authentication required'
                 ], 401);
                 return;
@@ -225,14 +225,14 @@ class ProfileController extends Controller
 
             if (!$currentUsername) {
                 $this->jsonResponse([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Invalid token'
                 ], 401);
                 return;
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
-            
+
             if (!isset($input['username']) || !isset($input['email']) || !isset($input['currentPassword'])) {
                 $this->jsonResponse([
                     'success' => false,
@@ -264,6 +264,70 @@ class ProfileController extends Controller
                         'username' => $input['username'],
                         'email' => $input['email']
                     ]
+                ]);
+
+            } catch (Exception $e) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 400);
+            }
+
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Internal server error'
+            ], 500);
+        }
+    }
+
+    public function checkPassword(string $username, string $password) {
+        try {
+            if (empty($username) || empty($password)) {
+                return $this->jsonResponse(false, 'Missing username or password');
+            }
+            $isValid = $this->model->checkPassword($username, $password);
+
+            return $this->jsonResponse([
+                'success' => $isValid, 
+                'message' => $isValid ? 'Password is correct' : 'Invalid password'
+            ]);
+        } catch (Exception $e) {
+            return $this->jsonResponse(false, $e->getMessage());
+        }
+    }
+
+    public function deleteAccount(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        try {
+            $jwt = $_COOKIE['jwt'] ?? null;
+            if (!$jwt) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'Authentication required'
+                ], 401);
+                return;
+            }
+            $payload = JWT::decode($jwt, new Key($this->jwtSecret, 'HS256'));
+            $currentUsername = $payload->username ?? null;
+
+            if (!$currentUsername) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'Invalid token'
+                ], 401);
+                return;
+            }
+
+            try {
+               $this->model->deleteUser($currentUsername);
+
+                $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'Profile deleted successfully'
                 ]);
 
             } catch (Exception $e) {
