@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const stringOutput = outputItem.querySelector('.string-output');
             const matrixOutput = outputItem.querySelector('.matrix-output');
             const treeOutput = outputItem.querySelector('.tree-output');
+            const graphOutput = outputItem.querySelector('.graph-output');
             
             if (numberArrayOutput) {
                 textToCopy = numberArrayOutput.textContent.trim();
@@ -78,6 +79,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').split('\n')
                                                     .map(l => l.trim()).filter(l => l.length).map(l => l.replace(/^Node:\s+|^Parent:\s+/i, '')).join('\n');
                 textToCopy = treeText;
+            } else if (graphOutput) {
+                let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = graphText.split('\n')
+                    .map(line => line.trimStart())
+                    .filter(line => line.length > 0)
+                    .join('\n');
             } else {
                 let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
                 textToCopy = itemText.split('\n')
@@ -161,16 +168,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 csvContent = currentGeneratedData.map(row => row.join(',')).join('\n');
                 break;
             case 'graph':
-        
-                csvContent = 'Adjacency Matrix\n';
-                csvContent += currentGeneratedData.map(row => row.join(',')).join('\n');
+                if (Array.isArray(currentGeneratedData) && Array.isArray(currentGeneratedData[0])) {
+                    // Adjacency matrix or list
+                    csvContent = currentGeneratedData.map(row => 
+                        Array.isArray(row) ? row.join(',') : row
+                    ).join('\n');
+                } else {
+                    // Edge list or other format
+                    csvContent = JSON.stringify(currentGeneratedData);
+                }
                 break;
             case 'tree':
-              
-                csvContent = 'Node,Parent\n';
-                currentGeneratedData.forEach((parent, node) => {
-                    csvContent += `${node},${parent}\n`;
-                });
+                if (Array.isArray(currentGeneratedData) && typeof currentGeneratedData[0] === 'number') {
+                    // Parent list
+                    csvContent = 'Node,Parent\n';
+                    currentGeneratedData.forEach((parent, node) => {
+                        csvContent += `${node},${parent}\n`;
+                    });
+                } else {
+                    // Adjacency list or matrix
+                    csvContent = currentGeneratedData.map(row => 
+                        Array.isArray(row) ? row.join(',') : row
+                    ).join('\n');
+                }
                 break;
         }
         
@@ -221,20 +241,21 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'graph':
                 jsonData = {
                     type: 'graph',
-                    adjacency_matrix: currentGeneratedData,
+                    data: currentGeneratedData,
                     metadata: {
-                        vertices: currentGeneratedData.length,
-                        graph_type: document.getElementById('graphType').value
+                        vertices: Array.isArray(currentGeneratedData) ? currentGeneratedData.length : 0,
+                        graph_type: document.getElementById('graphType').value,
+                        representation: document.getElementById('graphRepresentation').value
                     }
                 };
                 break;
             case 'tree':
                 jsonData = {
                     type: 'tree',
-                    parent_list: currentGeneratedData,
+                    data: currentGeneratedData,
                     metadata: {
-                        nodes: currentGeneratedData.length,
-                        root: currentGeneratedData.indexOf(-1)
+                        nodes: Array.isArray(currentGeneratedData) ? currentGeneratedData.length : 0,
+                        representation: document.getElementById('treeRepresentation').value
                     }
                 };
                 break;
@@ -477,6 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const n = parseInt(document.getElementById('numVertices').value);
         const m = parseInt(document.getElementById('numEdges').value);
         const type = document.getElementById('graphType').value;
+        const representation = document.getElementById('graphRepresentation').value;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of vertices', true);
@@ -498,36 +520,123 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setLoading(this, true);
 
-        let adj = [];
-        for (let i = 0; i < n; i++) {
-            adj.push(new Array(n).fill(0));
-        }
+        let graphData;
+        let displayHtml = '';
 
-        let edgesAdded = 0;
-        let attempts = 0;
-        const maxAttempts = m * 10;
+        if (representation === 'adjacency-matrix') {
+            // Generate adjacency matrix
+            let adj = [];
+            for (let i = 0; i < n; i++) {
+                adj.push(new Array(n).fill(0));
+            }
 
-        while (edgesAdded < m && attempts < maxAttempts) {
-            const u = Math.floor(Math.random() * n);
-            const v = Math.floor(Math.random() * n);
-            attempts++;
+            let edgesAdded = 0;
+            let attempts = 0;
+            const maxAttempts = m * 10;
 
-            if (u === v) continue;
+            while (edgesAdded < m && attempts < maxAttempts) {
+                const u = Math.floor(Math.random() * n);
+                const v = Math.floor(Math.random() * n);
+                attempts++;
 
-            if (type === 'undirected') {
-                if (adj[u][v] === 0) {
-                    adj[u][v] = 1;
-                    adj[v][u] = 1;
-                    edgesAdded++;
+                if (u === v) continue;
+
+                if (type === 'undirected') {
+                    if (adj[u][v] === 0) {
+                        adj[u][v] = 1;
+                        adj[v][u] = 1;
+                        edgesAdded++;
+                    }
+                } else {
+                    if (adj[u][v] === 0) {
+                        adj[u][v] = 1;
+                        edgesAdded++;
+                    }
                 }
-            } else {
-                if (adj[u][v] === 0) {
-                    adj[u][v] = 1;
+            }
+            
+            graphData = adj;
+            displayHtml = '<div class="output-item"><div class="matrix-output">';
+            adj.forEach((row, i) => {
+                displayHtml += row.join(' ') + '<br>';
+            });
+            displayHtml += '</div></div>';
+            
+        } else if (representation === 'adjacency-list') {
+            // Generate adjacency list
+            let adjList = [];
+            for (let i = 0; i < n; i++) {
+                adjList.push([]);
+            }
+
+            let edges = new Set();
+            let edgesAdded = 0;
+            let attempts = 0;
+            const maxAttempts = m * 10;
+
+            while (edgesAdded < m && attempts < maxAttempts) {
+                const u = Math.floor(Math.random() * n);
+                const v = Math.floor(Math.random() * n);
+                attempts++;
+
+                if (u === v) continue;
+
+                const edgeKey = type === 'undirected' ? 
+                    (u < v ? `${u}-${v}` : `${v}-${u}`) : 
+                    `${u}-${v}`;
+
+                if (!edges.has(edgeKey)) {
+                    edges.add(edgeKey);
+                    adjList[u].push(v);
+                    if (type === 'undirected') {
+                        adjList[v].push(u);
+                    }
                     edgesAdded++;
                 }
             }
+
+            graphData = adjList;
+            displayHtml = '<div class="output-item"><div class="graph-output">';
+            adjList.forEach((neighbors, i) => {
+                displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
+            });
+            displayHtml += '</div></div>';
+            
+        } else if (representation === 'edge-list') {
+            // Generate edge list
+            let edgeList = [];
+            let edges = new Set();
+            let edgesAdded = 0;
+            let attempts = 0;
+            const maxAttempts = m * 10;
+
+            while (edgesAdded < m && attempts < maxAttempts) {
+                const u = Math.floor(Math.random() * n);
+                const v = Math.floor(Math.random() * n);
+                attempts++;
+
+                if (u === v) continue;
+
+                const edgeKey = type === 'undirected' ? 
+                    (u < v ? `${u}-${v}` : `${v}-${u}`) : 
+                    `${u}-${v}`;
+
+                if (!edges.has(edgeKey)) {
+                    edges.add(edgeKey);
+                    edgeList.push([u, v]);
+                    edgesAdded++;
+                }
+            }
+
+            graphData = edgeList;
+            displayHtml = '<div class="output-item"><div class="graph-output">';
+            edgeList.forEach(edge => {
+                displayHtml += `${edge[0]} ${edge[1]}<br>`;
+            });
+            displayHtml += '</div></div>';
         }
-        currentGeneratedData = adj;
+
+        currentGeneratedData = graphData;
         currentDataType = 'graph';
 
         try {
@@ -538,10 +647,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     type: 'graph',
-                    array: adj,
+                    array: graphData,
                     vertices: n,
-                    edges: edgesAdded,
-                    graphType: type
+                    edges: m,
+                    graphType: type,
+                    representation: representation
                 }),
                 credentials: 'include'
             });
@@ -549,12 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success) {
-                let graphHtml = `<div class="output-item"><div class="matrix-output">`;
-                adj.forEach((row, i) => {
-                    graphHtml += row.join(' ') + '<br>';
-                });
-                graphHtml += '</div></div>';
-                displayOutput(graphHtml);
+                displayOutput(displayHtml);
             } else {
                 throw new Error(data.message || 'Failed to generate graph');
             }
@@ -565,9 +670,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-
     buttons.tree.addEventListener('click', async function() {
         const n = parseInt(document.getElementById('numNodes').value);
+        const representation = document.getElementById('treeRepresentation').value;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of nodes', true);
@@ -576,15 +681,71 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setLoading(this, true);
 
-        let parent = new Array(n).fill(-1);
-        parent[0] = -1;
+        let treeData;
+        let displayHtml = '';
 
-        for (let i = 1; i < n; i++) {
-            const p = Math.floor(Math.random() * i);
-            parent[i] = p;
+        if (representation === 'parent-list') {
+            // Generate parent list
+            let parent = new Array(n).fill(-1);
+            parent[0] = -1; // root
+
+            for (let i = 1; i < n; i++) {
+                const p = Math.floor(Math.random() * i);
+                parent[i] = p;
+            }
+
+            treeData = parent;
+            displayHtml = `
+                <div class="output-item">
+                    <div class="tree-output"> Node:   ${Array.from({length: n}, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br> Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
+                    </div>
+                </div>
+            `;
+            
+        } else if (representation === 'adjacency-list') {
+            // Generate adjacency list for tree
+            let adjList = [];
+            for (let i = 0; i < n; i++) {
+                adjList.push([]);
+            }
+
+            // Build tree structure
+            for (let i = 1; i < n; i++) {
+                const parent = Math.floor(Math.random() * i);
+                adjList[parent].push(i);
+                adjList[i].push(parent);
+            }
+
+            treeData = adjList;
+            displayHtml = '<div class="output-item"><div class="graph-output">';
+            adjList.forEach((neighbors, i) => {
+                displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
+            });
+            displayHtml += '</div></div>';
+            
+        } else if (representation === 'adjacency-matrix') {
+            // Generate adjacency matrix for tree
+            let adj = [];
+            for (let i = 0; i < n; i++) {
+                adj.push(new Array(n).fill(0));
+            }
+
+            // Build tree structure
+            for (let i = 1; i < n; i++) {
+                const parent = Math.floor(Math.random() * i);
+                adj[parent][i] = 1;
+                adj[i][parent] = 1;
+            }
+
+            treeData = adj;
+            displayHtml = '<div class="output-item"><div class="matrix-output">';
+            adj.forEach((row, i) => {
+                displayHtml += row.join(' ') + '<br>';
+            });
+            displayHtml += '</div></div>';
         }
 
-        currentGeneratedData = parent;
+        currentGeneratedData = treeData;
         currentDataType = 'tree';
 
         try {
@@ -595,8 +756,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     type: 'tree',
-                    array: parent,
-                    nodes: n
+                    array: treeData,
+                    nodes: n,
+                    representation: representation
                 }),
                 credentials: 'include'
             });
@@ -604,12 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success) {
-                displayOutput(`
-                    <div class="output-item">
-                        <div class="tree-output"> Node:   ${Array.from({length: n}, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br> Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
-                        </div>
-                    </div>
-                `);
+                displayOutput(displayHtml);
             } else {
                 throw new Error(data.message || 'Failed to generate tree');
             }
