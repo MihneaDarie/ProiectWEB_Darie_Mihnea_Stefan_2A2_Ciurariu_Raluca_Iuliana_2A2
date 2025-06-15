@@ -45,14 +45,7 @@ create table data_set(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_data_set_id_users FOREIGN KEY (user_id) REFERENCES users(id)
 )
-/
-create or replace trigger data_set_inc
-before insert on data_set
-for each row
-begin
-    SELECT data_set_seq.NEXTVAL INTO :NEW.id FROM dual;
-end;
-/
+
 create table number_array(
     id INTEGER NOT NULL PRIMARY KEY,
     length INTEGER,

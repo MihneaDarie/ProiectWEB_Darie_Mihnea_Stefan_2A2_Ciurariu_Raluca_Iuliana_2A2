@@ -69,6 +69,93 @@ class ProfileController extends Controller
             ], 500);
         }
     }
+    public function history(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        
+        try {
+            $jwt = $_COOKIE['jwt'] ?? null;
+            if (!$jwt) {
+                $this->jsonResponse(['success' => false, 'message' => 'Authentication required'], 401);
+                return;
+            }
+            
+            $payload = JWT::decode($jwt, new Key($this->jwtSecret, 'HS256'));
+            $username = $payload->username ?? null;
+            
+            if (!$username) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid token'], 401);
+                return;
+            }
+            
+            $type = $_GET['type'] ?? null;
+   
+            $validTypes = ['number_array', 'character_array', 'matrix', 'graph', 'tree'];
+            if ($type && !in_array($type, $validTypes)) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid type'], 400);
+                return;
+            }
+            
+            $data = $this->model->getUserHistory($username, $type);
+
+            if (!is_array($data)) {
+                $data = [];
+            }
+            
+            $this->jsonResponse(['success' => true, 'data' => $data]);
+            
+        } catch (\Throwable $e) {
+            error_log('History error: ' . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Internal server error'], 500);
+        }
+    }
+    
+    public function getDataSet(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        
+        try {
+            $jwt = $_COOKIE['jwt'] ?? null;
+            if (!$jwt) {
+                $this->jsonResponse(['success' => false, 'message' => 'Authentication required'], 401);
+                return;
+            }
+            
+            $payload = JWT::decode($jwt, new Key($this->jwtSecret, 'HS256'));
+            $username = $payload->username ?? null;
+            
+            if (!$username) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid token'], 401);
+                return;
+            }
+            
+            $id = $_GET['id'] ?? null;
+            if (!$id || !is_numeric($id)) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid dataset ID'], 400);
+                return;
+            }
+            
+            $dataset = $this->model->getDatasetById((int)$id, $username);
+
+            $response = [
+                'success' => true,
+                'data' => [
+                    'id' => $dataset['ID'],
+                    'type' => $dataset['TYPE'],
+                    'label' => $dataset['LABEL'],
+                    'description' => $dataset['DESCRIPTION'],
+                    'data' => $dataset['DATA'],
+                    'created_at' => $dataset['CREATED_AT']
+                ]
+            ];
+            
+            $this->jsonResponse($response);
+            
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 
     public function getUserData(): void
     {

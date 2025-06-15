@@ -43,9 +43,21 @@ if ($method === 'POST' && $page === 'login') {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
 
+    if($action=== 'getDataSet'){
+        $ctrl = new ProfileController($conn);
+        $ctrl->getDataSet();            
+        exit;
+    }
+
     if ($action === 'distribution') {
         $ctrl = new ProfileController($conn);
         $ctrl->distribution();
+        exit;
+    }
+
+    if($action  === 'history'){
+        $ctrl = new ProfileController($conn);
+        $ctrl->history();
         exit;
     }
 
