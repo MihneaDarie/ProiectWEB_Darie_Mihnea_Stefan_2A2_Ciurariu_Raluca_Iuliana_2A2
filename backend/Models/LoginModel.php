@@ -17,7 +17,7 @@ class LoginModel extends Model{
     public function login($username, $password){
 
         if (!$this->user_exists($username)) {
-            return ["success" => false, "message" => "Numele utilizatorului nu există!"];
+            return ["success" => false, "message" => "Username does not exist!"];
         }
 
         $sql = "SELECT password FROM users WHERE username = :username";
@@ -37,15 +37,15 @@ class LoginModel extends Model{
 
             $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');
 
-            setcookie('jwt',$jwt,['expires'  => time() + 3600,'path' => '/', 'httponly' => true, 'samesite' => 'Lax']); //$jwt = $_COOKIE['token'] ?? null; (si folosim asta de fiecare data cand vrem sa luam tokenul in requesturi)
+            setcookie('jwt',$jwt,['expires'  => time() + 3600,'path' => '/', 'httponly' => true, 'samesite' => 'Lax']); //$jwt = $_COOKIE['token'] ?? null; (and use this whenever we want to get the token in requests)
 
             return [
                 "success" => true,
-                "message" => "Autentificare reușită!",
+                "message" => "Authentication successful!",
                 "token" => $jwt
             ];
         } else {
-            return ["success" => false, "message" => "Parola incorectă!"];
+            return ["success" => false, "message" => "Incorrect password!"];
         }
     }
 

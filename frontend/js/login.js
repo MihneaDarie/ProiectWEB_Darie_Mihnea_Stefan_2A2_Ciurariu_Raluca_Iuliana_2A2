@@ -6,17 +6,36 @@ window.showPassword = function(id) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const loginForm    = document.getElementById('loginForm');
+  const loginForm = document.getElementById('loginForm');
   const loginMessage = document.getElementById('loginMessage');
-  const username     = document.getElementById('username');
-  const password     = document.getElementById('loginPassword');
+  const username = document.getElementById('username');
+  const password = document.getElementById('loginPassword');
 
   const resetMessages = () => {
-    loginMessage.textContent = '';
+    while (loginMessage.firstChild) {
+      loginMessage.removeChild(loginMessage.firstChild);
+    }
+
     username.classList.remove("invalid");
     password.classList.remove("invalid");
     username.placeholder = "Username";
     password.placeholder = "Password";
+  };
+
+  const createMessage = (text, color, isSubMessage = false) => {
+    const messageDiv = document.createElement('div');
+    messageDiv.style.color = color;
+    messageDiv.textContent = text;
+    
+    if (isSubMessage) {
+      messageDiv.style.fontSize = '14px';
+      messageDiv.style.marginTop = '5px';
+      messageDiv.style.color = '#6c757d';
+    } else {
+      messageDiv.style.fontWeight = 'bold';
+    }
+    
+    return messageDiv;
   };
 
   loginForm.addEventListener('submit', async (e) => {
@@ -36,7 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (hasError) return;
 
-    loginMessage.textContent = 'Se încarcă...';
+    const loadingMsg = createMessage('Loading...', '#6c757d');
+    loginMessage.appendChild(loadingMsg);
+
+    const submitButton = loginForm.querySelector('button[type="submit"]');
+    const submitSpan = submitButton.querySelector('span');
+    const originalText = submitSpan.textContent;
+    submitButton.disabled = true;
+    submitSpan.textContent = 'Processing...';
 
     const payload = {
       username: username.value.trim(),
@@ -55,28 +81,46 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       if (!response.ok) {
-        throw new Error('Cod HTTP: ' + response.status);
+        throw new Error('HTTP Code: ' + response.status);
       }
 
       const data = await response.json();
-      console.log('↪ Răspuns JSON complet:', data, 'typeof success =', typeof data.success);
+      console.log('Complete JSON response:', data, 'typeof success =', typeof data.success);
 
-      const isOk =  data.success === true ||
-                    data.success === 'true' ||
-                    data.success === 1    ||
-                    data.success === '1';
+      while (loginMessage.firstChild) {
+        loginMessage.removeChild(loginMessage.firstChild);
+      }
+
+      const isOk = data.success === true ||
+                   data.success === 'true' ||
+                   data.success === 1 ||
+                   data.success === '1';
 
       if (isOk) {
-        console.log('⇢ Redirect spre generator');
+        console.log('⇢ Redirect to generator');
+        const successMsg = createMessage('Login successful!', '#28a745');
+        loginMessage.appendChild(successMsg);
         window.location.href = '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=generator';
-        return;
+
       } else {
-        console.log('✘ Nu intră în ramura de succes, data.success =', data.success);
-        loginMessage.textContent = data.message;
+        console.log('Not entering success branch, data.success =', data.success);
+        
+        const errorMsg = createMessage(data.message || 'Login failed. Please try again.', '#dc3545');
+        loginMessage.appendChild(errorMsg);
+        submitButton.disabled = false;
+        submitSpan.textContent = originalText;
       }
     } catch (err) {
-      console.error('Eroare în fetch/JSON:', err);
-      loginMessage.textContent = 'Eroare de rețea sau server.';
+      console.error('Error in fetch/JSON:', err);
+      
+      while (loginMessage.firstChild) {
+        loginMessage.removeChild(loginMessage.firstChild);
+      }
+      
+      const networkErrorMsg = createMessage('Network or server error. Please try again.', '#dc3545');
+      loginMessage.appendChild(networkErrorMsg);
+      submitButton.disabled = false;
+      submitSpan.textContent = originalText;
     }
   });
 
