@@ -257,6 +257,24 @@ body, html {
     background: #ffffff;
 }
 
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-item label {
+    cursor: pointer;
+    user-select: none;
+}
+
 button {
     width: 100%;
     margin-top: 1.5rem;

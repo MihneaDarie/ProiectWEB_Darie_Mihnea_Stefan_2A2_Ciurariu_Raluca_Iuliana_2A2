@@ -1,14 +1,14 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const inputType = document.getElementById('inputType');
     const outputArea = document.getElementById('outputArea');
     const clearButton = document.getElementById('clearOutput');
     const copyButton = document.getElementById('copyOutput');
     const exportCSVButton = document.getElementById('exportCSV');
     const exportJSONButton = document.getElementById('exportJSON');
-    
+
     let currentGeneratedData = null;
     let currentDataType = null;
-    
+
     const controls = {
         numerical: document.querySelector('.numerical-controls'),
         character: document.querySelector('.character-controls'),
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const matrixOutput = outputItem.querySelector('.matrix-output');
             const treeOutput = outputItem.querySelector('.tree-output');
             const graphOutput = outputItem.querySelector('.graph-output');
-            
+
             if (numberArrayOutput) {
                 textToCopy = numberArrayOutput.textContent.trim();
             } else if (stringOutput) {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .join('\n');
             } else if (treeOutput) {
                 let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').split('\n')
-                                                    .map(l => l.trim()).filter(l => l.length).map(l => l.replace(/^Node:\s+|^Parent:\s+/i, '')).join('\n');
+                    .map(l => l.trim()).filter(l => l.length).map(l => l.replace(/^Node:\s+|^Parent:\s+/i, '')).join('\n');
                 textToCopy = treeText;
             } else if (graphOutput) {
                 let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </svg>
             Copied!
         `;
-        
+
         setTimeout(() => {
             copyButton.classList.remove('copied');
             copyButton.innerHTML = originalText;
@@ -148,16 +148,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function exportToCSV() {
         if (!currentGeneratedData) return;
-        
+
         let csvContent = "";
         const now = new Date();
-        const dateStr = now.toISOString().split('T')[0]; 
-        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); 
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
         const timestamp = `${dateStr}_${timeStr}`;
         let filename = `${currentDataType}_${timestamp}.csv`;
-    
-        
-        switch(currentDataType) {
+
+
+        switch (currentDataType) {
             case 'number_array':
                 csvContent = currentGeneratedData.join(',');
                 break;
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'graph':
                 if (Array.isArray(currentGeneratedData) && Array.isArray(currentGeneratedData[0])) {
                     // Adjacency matrix or list
-                    csvContent = currentGeneratedData.map(row => 
+                    csvContent = currentGeneratedData.map(row =>
                         Array.isArray(row) ? row.join(',') : row
                     ).join('\n');
                 } else {
@@ -187,27 +187,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 } else {
                     // Adjacency list or matrix
-                    csvContent = currentGeneratedData.map(row => 
+                    csvContent = currentGeneratedData.map(row =>
                         Array.isArray(row) ? row.join(',') : row
                     ).join('\n');
                 }
                 break;
         }
-        
+
         downloadFile(csvContent, filename, 'text/csv');
     }
 
     function exportToJSON() {
         if (!currentGeneratedData) return;
-        
+
         let jsonData = {};
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
-        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); 
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
         const timestamp = `${dateStr}_${timeStr}`;
         let filename = `${currentDataType}_${timestamp}.json`;
-        
-        switch(currentDataType) {
+
+        switch (currentDataType) {
             case 'number_array':
                 jsonData = {
                     type: 'numerical_array',
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 break;
         }
-        
+
         const jsonContent = JSON.stringify(jsonData, null, 2);
         downloadFile(jsonContent, filename, 'application/json');
     }
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
     exportCSVButton.addEventListener('click', exportToCSV);
     exportJSONButton.addEventListener('click', exportToJSON);
 
-    clearButton.addEventListener('click', function() {
+    clearButton.addEventListener('click', function () {
         outputArea.classList.add('empty');
         outputArea.innerHTML = '<p>Generated content will appear here...</p>';
         clearButton.style.display = 'none';
@@ -294,13 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     copyButton.addEventListener('click', copyToClipboard);
 
-    inputType.addEventListener('change', function() {
+    inputType.addEventListener('change', function () {
         Object.values(controls).forEach(control => {
             if (control) control.style.display = 'none';
         });
 
         clearButton.click();
-        
+
         const selectedType = inputType.value;
         if (controls[selectedType]) {
             controls[selectedType].style.display = 'block';
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    buttons.numerical.addEventListener('click', async function() {
+    buttons.numerical.addEventListener('click', async function () {
         const min = parseInt(document.getElementById('minValue').value);
         const max = parseInt(document.getElementById('maxValue').value);
         const length = parseInt(document.getElementById('arrayLength').value);
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 displayOutput(`
                     <div class="output-item">
@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    buttons.character.addEventListener('click', async function() {
+    buttons.character.addEventListener('click', async function () {
         const charSet = document.getElementById('charSet').value;
         const length = parseInt(document.getElementById('stringLength').value);
 
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 displayOutput(`
                     <div class="output-item">
@@ -428,18 +428,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    buttons.matrix.addEventListener('click', async function() {
+
+    const isMapCheckbox = document.getElementById('isMap');
+    const minMaxControls = document.getElementById('minMaxControls');
+    const maxMaxControls = document.getElementById('maxMaxControls');
+    isMapCheckbox.addEventListener('change', function () {
+        if (this.checked) {
+            minMaxControls.style.display = 'none';
+            maxMaxControls.style.display = 'none';
+        } else {
+            minMaxControls.style.display = '';
+            maxMaxControls.style.display = '';
+        }
+    });
+
+    buttons.matrix.addEventListener('click', async function () {
         const rows = parseInt(document.getElementById('numRows').value);
         const cols = parseInt(document.getElementById('numCols').value);
         const minV = parseInt(document.getElementById('minMatrixValue').value);
         const maxV = parseInt(document.getElementById('maxMatrixValue').value);
+        const isMap = document.getElementById('isMap').checked;
 
-        if (isNaN(rows) || rows < 1 || isNaN(cols) || cols < 1 || isNaN(minV) || isNaN(maxV)) {
+        if (isNaN(rows) || rows < 1 || isNaN(cols) || cols < 1 || (!isMap && (isNaN(minV) || isNaN(maxV)))) {
             displayOutput('Please fill in all fields correctly', true);
             return;
         }
 
-        if (minV > maxV) {
+        if (!isMap && minV > maxV) {
             displayOutput('Minimum value must be less than or equal to maximum value', true);
             return;
         }
@@ -450,7 +465,12 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let i = 0; i < rows; i++) {
             let row = [];
             for (let j = 0; j < cols; j++) {
-                row.push(Math.floor(Math.random() * (maxV - minV + 1)) + minV);
+                if (isMap) {
+                    // 50/50 water/land, or you can change the probability
+                    row.push(Math.random() < 0.5 ? 0 : 1);
+                } else {
+                    row.push(Math.floor(Math.random() * (maxV - minV + 1)) + minV);
+                }
             }
             matrix.push(row);
         }
@@ -469,14 +489,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     array: matrix,
                     rows: rows,
                     cols: cols,
-                    minValue: minV,
-                    maxValue: maxV
+                    minValue: isMap ? 0 : minV,
+                    maxValue: isMap ? 1 : maxV,
+                    isMap: isMap
                 }),
                 credentials: 'include'
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 let matrixHtml = '<div class="output-item"><div class="matrix-output">';
                 matrix.forEach(row => {
@@ -494,11 +515,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    buttons.graphs.addEventListener('click', async function() {
+    buttons.graphs.addEventListener('click', async function () {
         const n = parseInt(document.getElementById('numVertices').value);
         const m = parseInt(document.getElementById('numEdges').value);
         const type = document.getElementById('graphType').value;
         const representation = document.getElementById('graphRepresentation').value;
+        const isConnected = document.getElementById('isConnected').checked;
+        const isBipartite = document.getElementById('isBipartite').checked;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of vertices', true);
@@ -509,131 +532,229 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const maxEdges = (type === 'undirected') 
-            ? Math.floor(n * (n - 1) / 2) 
-            : n * (n - 1);
-            
+        let maxEdges;
+        if (isBipartite) {
+            const groupA = Math.floor(n / 2);
+            const groupB = n - groupA;
+            maxEdges = groupA * groupB;
+        } else {
+            maxEdges = (type === 'undirected')
+                ? Math.floor(n * (n - 1) / 2)
+                : n * (n - 1);
+        }
+
         if (m > maxEdges) {
-            displayOutput(`Number of edges (${m}) exceeds the maximum for ${type} graph: ${maxEdges}`, true);
+            displayOutput(`Number of edges (${m}) exceeds the maximum for the selected graph type: ${maxEdges}`, true);
             return;
         }
 
         setLoading(this, true);
 
-        let graphData;
-        let displayHtml = '';
+        let graphData, displayHtml = '';
 
-        if (representation === 'adjacency-matrix') {
-            // Generate adjacency matrix
-            let adj = [];
+        if (isBipartite) {
+            let groupA = [];
+            let groupB = [];
             for (let i = 0; i < n; i++) {
-                adj.push(new Array(n).fill(0));
+                (i < Math.floor(n / 2) ? groupA : groupB).push(i);
             }
-
-            let edgesAdded = 0;
-            let attempts = 0;
-            const maxAttempts = m * 10;
-
-            while (edgesAdded < m && attempts < maxAttempts) {
-                const u = Math.floor(Math.random() * n);
-                const v = Math.floor(Math.random() * n);
-                attempts++;
-
-                if (u === v) continue;
-
-                if (type === 'undirected') {
-                    if (adj[u][v] === 0) {
-                        adj[u][v] = 1;
-                        adj[v][u] = 1;
-                        edgesAdded++;
-                    }
-                } else {
-                    if (adj[u][v] === 0) {
-                        adj[u][v] = 1;
-                        edgesAdded++;
-                    }
+            let possibleEdges = [];
+            for (let u of groupA) {
+                for (let v of groupB) {
+                    possibleEdges.push([u, v]);
                 }
             }
-            
-            graphData = adj;
-            displayHtml = '<div class="output-item"><div class="matrix-output">';
-            adj.forEach((row, i) => {
-                displayHtml += row.join(' ') + '<br>';
-            });
-            displayHtml += '</div></div>';
-            
-        } else if (representation === 'adjacency-list') {
-            // Generate adjacency list
-            let adjList = [];
-            for (let i = 0; i < n; i++) {
-                adjList.push([]);
+            for (let i = possibleEdges.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [possibleEdges[i], possibleEdges[j]] = [possibleEdges[j], possibleEdges[i]];
             }
+            const edges = possibleEdges.slice(0, m);
 
-            let edges = new Set();
-            let edgesAdded = 0;
-            let attempts = 0;
-            const maxAttempts = m * 10;
-
-            while (edgesAdded < m && attempts < maxAttempts) {
-                const u = Math.floor(Math.random() * n);
-                const v = Math.floor(Math.random() * n);
-                attempts++;
-
-                if (u === v) continue;
-
-                const edgeKey = type === 'undirected' ? 
-                    (u < v ? `${u}-${v}` : `${v}-${u}`) : 
-                    `${u}-${v}`;
-
-                if (!edges.has(edgeKey)) {
-                    edges.add(edgeKey);
+            if (representation === 'adjacency-matrix') {
+                let adj = Array.from({ length: n }, () => Array(n).fill(0));
+                edges.forEach(([u, v]) => {
+                    adj[u][v] = 1;
+                    if (type === 'undirected') adj[v][u] = 1;
+                });
+                graphData = adj;
+                displayHtml = '<div class="output-item"><div class="matrix-output">';
+                adj.forEach(row => displayHtml += row.join(' ') + '<br>');
+                displayHtml += '</div></div>';
+            } else if (representation === 'adjacency-list') {
+                let adjList = Array.from({ length: n }, () => []);
+                edges.forEach(([u, v]) => {
                     adjList[u].push(v);
-                    if (type === 'undirected') {
-                        adjList[v].push(u);
-                    }
-                    edgesAdded++;
-                }
+                    if (type === 'undirected') adjList[v].push(u);
+                });
+                graphData = adjList;
+                displayHtml = '<div class="output-item"><div class="graph-output">';
+                adjList.forEach((neigh, i) => displayHtml += `${i}: ${neigh.join(', ')}<br>`);
+                displayHtml += '</div></div>';
+            } else if (representation === 'edge-list') {
+                graphData = edges;
+                displayHtml = '<div class="output-item"><div class="graph-output">';
+                edges.forEach(([u, v]) => displayHtml += `${u} ${v}<br>`);
+                displayHtml += '</div></div>';
+            }
+        }
+        else if (isConnected) {
+            let edges = [];
+            let parent = Array(n).fill(0).map((_, i) => i);
+            for (let i = 1; i < n; i++) {
+                let u = i;
+                let v = Math.floor(Math.random() * i); // Random node in 0..i-1
+                edges.push([u, v]);
             }
 
-            graphData = adjList;
-            displayHtml = '<div class="output-item"><div class="graph-output">';
-            adjList.forEach((neighbors, i) => {
-                displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
-            });
-            displayHtml += '</div></div>';
-            
-        } else if (representation === 'edge-list') {
-            // Generate edge list
-            let edgeList = [];
-            let edges = new Set();
-            let edgesAdded = 0;
-            let attempts = 0;
-            const maxAttempts = m * 10;
-
-            while (edgesAdded < m && attempts < maxAttempts) {
-                const u = Math.floor(Math.random() * n);
-                const v = Math.floor(Math.random() * n);
-                attempts++;
-
+            let edgeSet = new Set(edges.map(([u, v]) => type === 'undirected' ? `${Math.min(u, v)}-${Math.max(u, v)}` : `${u}-${v}`));
+            while (edges.length < m) {
+                let u = Math.floor(Math.random() * n);
+                let v = Math.floor(Math.random() * n);
                 if (u === v) continue;
-
-                const edgeKey = type === 'undirected' ? 
-                    (u < v ? `${u}-${v}` : `${v}-${u}`) : 
-                    `${u}-${v}`;
-
-                if (!edges.has(edgeKey)) {
-                    edges.add(edgeKey);
-                    edgeList.push([u, v]);
-                    edgesAdded++;
+                let key = type === 'undirected' ? `${Math.min(u, v)}-${Math.max(u, v)}` : `${u}-${v}`;
+                if (!edgeSet.has(key)) {
+                    edges.push([u, v]);
+                    edgeSet.add(key);
                 }
             }
 
-            graphData = edgeList;
-            displayHtml = '<div class="output-item"><div class="graph-output">';
-            edgeList.forEach(edge => {
-                displayHtml += `${edge[0]} ${edge[1]}<br>`;
-            });
-            displayHtml += '</div></div>';
+            if (representation === 'adjacency-matrix') {
+                let adj = Array.from({ length: n }, () => Array(n).fill(0));
+                edges.forEach(([u, v]) => {
+                    adj[u][v] = 1;
+                    if (type === 'undirected') adj[v][u] = 1;
+                });
+                graphData = adj;
+                displayHtml = '<div class="output-item"><div class="matrix-output">';
+                adj.forEach(row => displayHtml += row.join(' ') + '<br>');
+                displayHtml += '</div></div>';
+            } else if (representation === 'adjacency-list') {
+                let adjList = Array.from({ length: n }, () => []);
+                edges.forEach(([u, v]) => {
+                    adjList[u].push(v);
+                    if (type === 'undirected') adjList[v].push(u);
+                });
+                graphData = adjList;
+                displayHtml = '<div class="output-item"><div class="graph-output">';
+                adjList.forEach((neigh, i) => displayHtml += `${i}: ${neigh.join(', ')}<br>`);
+                displayHtml += '</div></div>';
+            } else if (representation === 'edge-list') {
+                graphData = edges;
+                displayHtml = '<div class="output-item"><div class="graph-output">';
+                edges.forEach(([u, v]) => displayHtml += `${u} ${v}<br>`);
+                displayHtml += '</div></div>';
+            }
+        }
+        else {
+            if (representation === 'adjacency-matrix') {
+                let adj = [];
+                for (let i = 0; i < n; i++) {
+                    adj.push(new Array(n).fill(0));
+                }
+
+                let edgesAdded = 0;
+                let attempts = 0;
+                const maxAttempts = m * 10;
+
+                while (edgesAdded < m && attempts < maxAttempts) {
+                    const u = Math.floor(Math.random() * n);
+                    const v = Math.floor(Math.random() * n);
+                    attempts++;
+
+                    if (u === v) continue;
+
+                    if (type === 'undirected') {
+                        if (adj[u][v] === 0) {
+                            adj[u][v] = 1;
+                            adj[v][u] = 1;
+                            edgesAdded++;
+                        }
+                    } else {
+                        if (adj[u][v] === 0) {
+                            adj[u][v] = 1;
+                            edgesAdded++;
+                        }
+                    }
+                }
+
+                graphData = adj;
+                displayHtml = '<div class="output-item"><div class="matrix-output">';
+                adj.forEach((row, i) => {
+                    displayHtml += row.join(' ') + '<br>';
+                });
+                displayHtml += '</div></div>';
+
+            } else if (representation === 'adjacency-list') {
+                let adjList = [];
+                for (let i = 0; i < n; i++) {
+                    adjList.push([]);
+                }
+
+                let edges = new Set();
+                let edgesAdded = 0;
+                let attempts = 0;
+                const maxAttempts = m * 10;
+
+                while (edgesAdded < m && attempts < maxAttempts) {
+                    const u = Math.floor(Math.random() * n);
+                    const v = Math.floor(Math.random() * n);
+                    attempts++;
+
+                    if (u === v) continue;
+
+                    const edgeKey = type === 'undirected' ?
+                        (u < v ? `${u}-${v}` : `${v}-${u}`) :
+                        `${u}-${v}`;
+
+                    if (!edges.has(edgeKey)) {
+                        edges.add(edgeKey);
+                        adjList[u].push(v);
+                        if (type === 'undirected') {
+                            adjList[v].push(u);
+                        }
+                        edgesAdded++;
+                    }
+                }
+
+                graphData = adjList;
+                displayHtml = '<div class="output-item"><div class="graph-output">';
+                adjList.forEach((neighbors, i) => {
+                    displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
+                });
+                displayHtml += '</div></div>';
+
+            } else if (representation === 'edge-list') {
+                let edgeList = [];
+                let edges = new Set();
+                let edgesAdded = 0;
+                let attempts = 0;
+                const maxAttempts = m * 10;
+
+                while (edgesAdded < m && attempts < maxAttempts) {
+                    const u = Math.floor(Math.random() * n);
+                    const v = Math.floor(Math.random() * n);
+                    attempts++;
+
+                    if (u === v) continue;
+
+                    const edgeKey = type === 'undirected' ?
+                        (u < v ? `${u}-${v}` : `${v}-${u}`) :
+                        `${u}-${v}`;
+
+                    if (!edges.has(edgeKey)) {
+                        edges.add(edgeKey);
+                        edgeList.push([u, v]);
+                        edgesAdded++;
+                    }
+                }
+
+                graphData = edgeList;
+                displayHtml = '<div class="output-item"><div class="graph-output">';
+                edgeList.forEach(edge => {
+                    displayHtml += `${edge[0]} ${edge[1]}<br>`;
+                });
+                displayHtml += '</div></div>';
+            }
         }
 
         currentGeneratedData = graphData;
@@ -642,22 +763,21 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     type: 'graph',
                     array: graphData,
                     vertices: n,
                     edges: m,
                     graphType: type,
-                    representation: representation
+                    representation: representation,
+                    isConnected: isConnected,
+                    isBipartite: isBipartite
                 }),
                 credentials: 'include'
             });
 
             const data = await response.json();
-            
             if (data.success) {
                 displayOutput(displayHtml);
             } else {
@@ -670,7 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    buttons.tree.addEventListener('click', async function() {
+    buttons.tree.addEventListener('click', async function () {
         const n = parseInt(document.getElementById('numNodes').value);
         const representation = document.getElementById('treeRepresentation').value;
 
@@ -685,9 +805,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let displayHtml = '';
 
         if (representation === 'parent-list') {
-            // Generate parent list
             let parent = new Array(n).fill(-1);
-            parent[0] = -1; // root
+            parent[0] = -1;
 
             for (let i = 1; i < n; i++) {
                 const p = Math.floor(Math.random() * i);
@@ -697,19 +816,17 @@ document.addEventListener('DOMContentLoaded', function() {
             treeData = parent;
             displayHtml = `
                 <div class="output-item">
-                    <div class="tree-output"> Node:   ${Array.from({length: n}, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br> Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
+                    <div class="tree-output"> Node:   ${Array.from({ length: n }, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br> Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
                     </div>
                 </div>
             `;
-            
+
         } else if (representation === 'adjacency-list') {
-            // Generate adjacency list for tree
             let adjList = [];
             for (let i = 0; i < n; i++) {
                 adjList.push([]);
             }
 
-            // Build tree structure
             for (let i = 1; i < n; i++) {
                 const parent = Math.floor(Math.random() * i);
                 adjList[parent].push(i);
@@ -722,15 +839,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
             });
             displayHtml += '</div></div>';
-            
+
         } else if (representation === 'adjacency-matrix') {
-            // Generate adjacency matrix for tree
             let adj = [];
             for (let i = 0; i < n; i++) {
                 adj.push(new Array(n).fill(0));
             }
 
-            // Build tree structure
             for (let i = 1; i < n; i++) {
                 const parent = Math.floor(Math.random() * i);
                 adj[parent][i] = 1;
@@ -764,7 +879,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 displayOutput(displayHtml);
             } else {

@@ -84,11 +84,15 @@
                         <label for="numCols">Number of Columns</label>
                         <input type="number" id="numCols" name="numCols" min="1" placeholder="e.g. 3">
                     </div>
-                    <div class="control-item">
+                    <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isMap" name="isMap">
+                        <label for="isMap">Generate as Map (0 = water, 1 = land)</label>
+                    </div>
+                    <div class="control-item" id="minMaxControls">
                         <label for="minMatrixValue">Minimum Value</label>
                         <input type="number" id="minMatrixValue" name="minMatrixValue" placeholder="e.g. 0">
                     </div>
-                    <div class="control-item">
+                    <div class="control-item" id="maxMaxControls">
                         <label for="maxMatrixValue">Maximum Value</label>
                         <input type="number" id="maxMatrixValue" name="maxMatrixValue" placeholder="e.g. 9">
                     </div>
@@ -120,6 +124,14 @@
                             <option value="undirected">Undirected</option>
                             <option value="directed">Directed</option>
                         </select>
+                    </div>
+                    <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isConnected" name="isConnected">
+                        <label for="isConnected">Generate Connected Graph</label>
+                    </div>
+                    <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isBipartite" name="isBipartite">
+                        <label for="isBipartite">Generate Bipartite Graph</label>
                     </div>
                     <button id="generateGraph">Generate Graph</button>
                 </div>
