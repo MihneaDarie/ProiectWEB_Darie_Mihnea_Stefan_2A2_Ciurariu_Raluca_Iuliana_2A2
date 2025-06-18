@@ -97,16 +97,45 @@ document.addEventListener('DOMContentLoaded', () => {
                    data.success === '1';
 
       if (isOk) {
-        console.log('⇢ Redirect to generator');
+        console.log('⇢ Login successful, checking redirect...', data);
+        
         const successMsg = createMessage('Login successful!', '#28a745');
         loginMessage.appendChild(successMsg);
-        window.location.href = '/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=generator';
+
+        const redirectPage = data.redirect || 'generator';
+        const userRole = data.role || 'user';
+        
+        console.log('User role:', userRole, 'Redirect to:', redirectPage);
+        
+
+        if (userRole === 'admin') {
+          const roleMsg = createMessage('Welcome Admin! Redirecting to admin panel...', '#17a2b8', true);
+          loginMessage.appendChild(roleMsg);
+        } else {
+          const roleMsg = createMessage('Redirecting to dashboard...', '#17a2b8', true);
+          loginMessage.appendChild(roleMsg);
+        }
+        
+        // Redirect after a short delay to show the message
+        setTimeout(() => {
+          window.location.href = `/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=${redirectPage}`;
+        }, 1500);
 
       } else {
         console.log('Not entering success branch, data.success =', data.success);
         
         const errorMsg = createMessage(data.message || 'Login failed. Please try again.', '#dc3545');
         loginMessage.appendChild(errorMsg);
+        
+        // Add specific error handling for different scenarios
+        if (data.message && data.message.includes('Username does not exist')) {
+          username.classList.add("invalid");
+          username.placeholder = "Username not found";
+        } else if (data.message && data.message.includes('Incorrect password')) {
+          password.classList.add("invalid");
+          password.placeholder = "Wrong password";
+        }
+        
         submitButton.disabled = false;
         submitSpan.textContent = originalText;
       }
@@ -119,6 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const networkErrorMsg = createMessage('Network or server error. Please try again.', '#dc3545');
       loginMessage.appendChild(networkErrorMsg);
+
+      const retryMsg = createMessage('Please check your internet connection and try again.', '#6c757d', true);
+      loginMessage.appendChild(retryMsg);
+      
       submitButton.disabled = false;
       submitSpan.textContent = originalText;
     }
@@ -127,7 +160,46 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('button[data-show-password]').forEach(button => {
     button.addEventListener('click', () => {
       const inputId = button.dataset.showPassword;
-      showPassword(inputId);
+      const input = document.getElementById(inputId);
+      const icon = button.querySelector('i');
+      
+      if (input) {
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+
+        if (icon) {
+          icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+        }
+
+        button.title = isPassword ? 'Hide password' : 'Show password';
+      }
     });
+  });
+
+  document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !submitButton.disabled) {
+      const activeElement = document.activeElement;
+      if (activeElement === username || activeElement === password) {
+        loginForm.dispatchEvent(new Event('submit'));
+      }
+    }
+  });
+
+  if (username) {
+    username.focus();
+  }
+
+  username.addEventListener('input', () => {
+    if (username.classList.contains('invalid')) {
+      username.classList.remove('invalid');
+      username.placeholder = 'Username';
+    }
+  });
+
+  password.addEventListener('input', () => {
+    if (password.classList.contains('invalid')) {
+      password.classList.remove('invalid');
+      password.placeholder = 'Password';
+    }
   });
 });
