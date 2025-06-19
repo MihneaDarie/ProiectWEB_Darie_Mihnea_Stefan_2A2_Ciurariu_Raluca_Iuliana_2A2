@@ -8,13 +8,13 @@ class RegisterModel extends Model{
 
     public function register($username, $password, $copy_password, $email) {
         if ($password !== $copy_password) {
-            return ["success" => false, "message" => "Password missmatch !"];
+            return ["success" => false, "message" => "Password missmatch!"];
         }
         if ($this->email_exists($email)) {
-            return ["success" => false, "message" => "Email adress already in use!"];
+            return ["success" => false, "message" => "Email address already in use!"];
         }
         if ($this->user_exists($username)) {
-            return ["success" => false, "message" => "Username already in use !"];
+            return ["success" => false, "message" => "Username already in use!"];
         }
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -35,13 +35,13 @@ class RegisterModel extends Model{
             if (strpos($e['message'], 'ORA-00001') !== false) {
                 return [
                     "success" => false,
-                    "message" => "Numele de utilizator sau emailul este deja folosit!"
+                    "message" => "Username or email is already in use!"
                 ];
             }
 
             return [
                 "success" => false,
-                "message" => "Eroare la crearea contului: " . $e['message']
+                "message" => "Error creating account: " . $e['message']
             ];
         }
 
@@ -49,7 +49,7 @@ class RegisterModel extends Model{
 
         return [
             "success" => true,
-            "message" => "Cont creat cu succes!"
+            "message" => "Account created successfully!\n"
         ];
     }
 

@@ -373,6 +373,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 break;
             case 'tree':
+<<<<<<< HEAD
                 if (Array.isArray(currentGeneratedData) && typeof currentGeneratedData[0] === 'number') {
                     csvContent = 'Node,Parent\n';
                     currentGeneratedData.forEach((parent, node) => {
@@ -383,6 +384,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         Array.isArray(row) ? row.join(',') : row
                     ).join('\n');
                 }
+=======
+              
+                csvContent = 'Parent list\n';
+                currentGeneratedData.forEach(parent => {
+                    csvContent += `${parent}\n`;
+                });
+>>>>>>> 167618764efb8ee8d80085924776ea7bc3266b9d
                 break;
         }
 
