@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let currentGeneratedData = null;
     let currentDataType = null;
+    let currentGraphMetadata = null;
 
     const controls = {
         numerical: document.querySelector('.numerical-controls'),
@@ -24,6 +25,31 @@ document.addEventListener('DOMContentLoaded', function () {
         graphs: document.getElementById('generateGraph'),
         tree: document.getElementById('generateTree')
     };
+
+    // Create visualize button
+    const visualizeButton = document.createElement('button');
+    visualizeButton.className = 'visualize-button';
+    visualizeButton.id = 'visualizeGraph';
+    visualizeButton.style.display = 'none';
+    visualizeButton.title = 'Visualize Graph';
+    visualizeButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <circle cx="4" cy="6" r="2"/>
+            <circle cx="20" cy="6" r="2"/>
+            <circle cx="4" cy="18" r="2"/>
+            <circle cx="20" cy="18" r="2"/>
+            <line x1="12" y1="9" x2="12" y2="3"/>
+            <line x1="9.5" y1="10.5" x2="6" y2="7"/>
+            <line x1="14.5" y1="10.5" x2="18" y2="7"/>
+            <line x1="9.5" y1="13.5" x2="6" y2="17"/>
+            <line x1="14.5" y1="13.5" x2="18" y2="17"/>
+        </svg>
+        Visualize
+    `;
+
+    const outputButtons = document.querySelector('.output-buttons');
+    outputButtons.insertBefore(visualizeButton, copyButton);
 
     function setLoading(button, isLoading) {
         if (isLoading) {
@@ -48,7 +74,177 @@ document.addEventListener('DOMContentLoaded', function () {
         copyButton.style.display = 'block';
         exportCSVButton.style.display = 'block';
         exportJSONButton.style.display = 'block';
+
+        if (currentDataType === 'graph' && currentGraphMetadata && currentGraphMetadata.vertices <= 10) {
+            visualizeButton.style.display = 'block';
+        } else {
+            visualizeButton.style.display = 'none';
+        }
     }
+
+    function visualizeGraph() {
+        if (!currentGeneratedData || currentDataType !== 'graph' || !currentGraphMetadata) return;
+
+        const { vertices, graphType, representation } = currentGraphMetadata;
+        if (vertices > 10) {
+            displayOutput('Graph visualization is only available for graphs with 10 or fewer vertices', true);
+            return;
+        }
+
+        let edges = [];
+        let isWeighted = false;
+        let weights = {};
+
+        if (representation === 'edge-list') {
+            edges = [];
+            for (let edge of currentGeneratedData) {
+                let u = edge[0], v = edge[1];
+                edges.push([u, v]);
+                if (edge.length > 2) {
+                    isWeighted = true;
+                    weights[`${u}-${v}`] = edge[2];
+                }
+            }
+        } else if (representation === 'adjacency-matrix') {
+            for (let i = 0; i < vertices; i++) {
+                for (let j = 0; j < vertices; j++) {
+                    if (currentGeneratedData[i][j] !== 0) {
+                        if (graphType === 'undirected' && i > j) continue;
+                        edges.push([i, j]);
+                        if (currentGeneratedData[i][j] !== 1) {
+                            isWeighted = true;
+                            weights[`${i}-${j}`] = currentGeneratedData[i][j];
+                        }
+                    }
+                }
+            }
+        } else if (representation === 'adjacency-list') {
+            let seen = new Set();
+            for (let i = 0; i < vertices; i++) {
+                for (let neighbor of currentGeneratedData[i]) {
+                    let v, w;
+                    if (typeof neighbor === 'object') {
+                        v = neighbor.node;
+                        w = neighbor.weight;
+                        isWeighted = true;
+                    } else {
+                        v = neighbor;
+                    }
+                    let edgeKey = graphType === 'undirected' ?
+                        `${Math.min(i, v)}-${Math.max(i, v)}` :
+                        `${i}-${v}`;
+                    if (graphType === 'undirected' && seen.has(edgeKey)) continue;
+                    edges.push([i, v]);
+                    if (typeof w !== 'undefined') {
+                        weights[`${i}-${v}`] = w;
+                    }
+                    if (graphType === 'undirected') seen.add(edgeKey);
+                }
+            }
+        }
+
+        // Create SVG
+        const svgWidth = 600;
+        const svgHeight = 400;
+        const nodeRadius = 20;
+        const arrowSize = 10;
+
+        const centerX = svgWidth / 2;
+        const centerY = svgHeight / 2;
+        const radius = Math.min(svgWidth, svgHeight) * 0.35;
+
+        let nodePositions = [];
+        for (let i = 0; i < vertices; i++) {
+            const angle = (2 * Math.PI * i) / vertices - Math.PI / 2;
+            nodePositions.push({
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle)
+            });
+        }
+
+        let svgContent = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
+
+        if (graphType === 'directed') {
+            svgContent += `
+                <defs>
+                    <marker id="arrowhead" markerWidth="${arrowSize}" markerHeight="${arrowSize}" 
+                            refX="${arrowSize}" refY="${arrowSize / 2}" orient="auto">
+                        <polygon points="0 0, ${arrowSize} ${arrowSize / 2}, 0 ${arrowSize}" 
+                                 fill="#666" />
+                    </marker>
+                </defs>`;
+        }
+
+        edges.forEach(([u, v]) => {
+            const start = nodePositions[u];
+            const end = nodePositions[v];
+
+            if (u === v) {
+                const loopRadius = 30;
+                const angle = (2 * Math.PI * u) / vertices - Math.PI / 2;
+                const cx = start.x + loopRadius * Math.cos(angle);
+                const cy = start.y + loopRadius * Math.sin(angle);
+                svgContent += `<path d="M ${start.x},${start.y} A ${loopRadius},${loopRadius} 0 1,1 ${start.x + 1},${start.y + 1}" 
+                                     fill="none" stroke="#666" stroke-width="2"`;
+                if (graphType === 'directed') {
+                    svgContent += ` marker-end="url(#arrowhead)"`;
+                }
+                svgContent += `/>`;
+            } else {
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const offsetStart = nodeRadius / distance;
+                const offsetEnd = (nodeRadius + (graphType === 'directed' ? arrowSize : 0)) / distance;
+
+                const x1 = start.x + dx * offsetStart;
+                const y1 = start.y + dy * offsetStart;
+                const x2 = end.x - dx * offsetEnd;
+                const y2 = end.y - dy * offsetEnd;
+
+                svgContent += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" 
+                                     stroke="#666" stroke-width="2"`;
+                if (graphType === 'directed') {
+                    svgContent += ` marker-end="url(#arrowhead)"`;
+                }
+                svgContent += `/>`;
+
+                if (isWeighted && weights[`${u}-${v}`]) {
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2;
+                    svgContent += `<rect x="${midX - 15}" y="${midY - 10}" width="30" height="20" 
+                                         fill="white" stroke="none"/>`;
+                    svgContent += `<text x="${midX}" y="${midY + 5}" 
+                                         text-anchor="middle" font-size="14" fill="#333">
+                                         ${weights[`${u}-${v}`]}</text>`;
+                }
+            }
+        });
+
+        for (let i = 0; i < vertices; i++) {
+            const pos = nodePositions[i];
+            svgContent += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeRadius}" 
+                                   fill="#4a5568" stroke="#2d3748" stroke-width="2"/>`;
+            svgContent += `<text x="${pos.x}" y="${pos.y + 5}" 
+                                 text-anchor="middle" font-size="16" fill="white" 
+                                 font-weight="bold">${i}</text>`;
+        }
+
+        svgContent += `</svg>`;
+
+        displayOutput(`
+            <div class="output-item">
+                <div class="graph-visualization">
+                    ${svgContent}
+                </div>
+                <div class="visualization-info">
+                    <p>Graph Visualization (${vertices} vertices, ${edges.length} edges, ${graphType}${isWeighted ? ', weighted' : ''})</p>
+                </div>
+            </div>
+        `);
+    }
+
+    visualizeButton.addEventListener('click', visualizeGraph);
 
     function copyToClipboard() {
         const outputContent = outputArea.querySelector('.output-content');
@@ -169,24 +365,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 break;
             case 'graph':
                 if (Array.isArray(currentGeneratedData) && Array.isArray(currentGeneratedData[0])) {
-                    // Adjacency matrix or list
                     csvContent = currentGeneratedData.map(row =>
                         Array.isArray(row) ? row.join(',') : row
                     ).join('\n');
                 } else {
-                    // Edge list or other format
                     csvContent = JSON.stringify(currentGeneratedData);
                 }
                 break;
             case 'tree':
                 if (Array.isArray(currentGeneratedData) && typeof currentGeneratedData[0] === 'number') {
-                    // Parent list
                     csvContent = 'Node,Parent\n';
                     currentGeneratedData.forEach((parent, node) => {
                         csvContent += `${node},${parent}\n`;
                     });
                 } else {
-                    // Adjacency list or matrix
                     csvContent = currentGeneratedData.map(row =>
                         Array.isArray(row) ? row.join(',') : row
                     ).join('\n');
@@ -242,11 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 jsonData = {
                     type: 'graph',
                     data: currentGeneratedData,
-                    metadata: {
-                        vertices: Array.isArray(currentGeneratedData) ? currentGeneratedData.length : 0,
-                        graph_type: document.getElementById('graphType').value,
-                        representation: document.getElementById('graphRepresentation').value
-                    }
+                    metadata: currentGraphMetadata
                 };
                 break;
             case 'tree':
@@ -288,8 +476,10 @@ document.addEventListener('DOMContentLoaded', function () {
         copyButton.style.display = 'none';
         exportCSVButton.style.display = 'none';
         exportJSONButton.style.display = 'none';
+        visualizeButton.style.display = 'none';
         currentGeneratedData = null;
         currentDataType = null;
+        currentGraphMetadata = null;
     });
 
     copyButton.addEventListener('click', copyToClipboard);
@@ -466,7 +656,6 @@ document.addEventListener('DOMContentLoaded', function () {
             let row = [];
             for (let j = 0; j < cols; j++) {
                 if (isMap) {
-                    // 50/50 water/land, or you can change the probability
                     row.push(Math.random() < 0.5 ? 0 : 1);
                 } else {
                     row.push(Math.floor(Math.random() * (maxV - minV + 1)) + minV);
@@ -520,6 +709,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const m = parseInt(document.getElementById('numEdges').value);
         const type = document.getElementById('graphType').value;
         const representation = document.getElementById('graphRepresentation').value;
+        const isWeighted = document.getElementById('isWeightedGraph').checked;
         const isConnected = document.getElementById('isConnected').checked;
         const isBipartite = document.getElementById('isBipartite').checked;
 
@@ -538,9 +728,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const groupB = n - groupA;
             maxEdges = groupA * groupB;
         } else {
-            maxEdges = (type === 'undirected')
-                ? Math.floor(n * (n - 1) / 2)
-                : n * (n - 1);
+            maxEdges = (type === 'undirected') ? Math.floor(n * (n - 1) / 2) : n * (n - 1);
         }
 
         if (m > maxEdges) {
@@ -550,211 +738,85 @@ document.addEventListener('DOMContentLoaded', function () {
 
         setLoading(this, true);
 
+        currentGraphMetadata = {
+            vertices: n,
+            edges: m,
+            graphType: type,
+            representation: representation,
+            isConnected: isConnected,
+            isBipartite: isBipartite,
+            isWeighted: isWeighted
+        };
+
         let graphData, displayHtml = '';
 
-        if (isBipartite) {
-            let groupA = [];
-            let groupB = [];
-            for (let i = 0; i < n; i++) {
-                (i < Math.floor(n / 2) ? groupA : groupB).push(i);
-            }
-            let possibleEdges = [];
-            for (let u of groupA) {
-                for (let v of groupB) {
-                    possibleEdges.push([u, v]);
-                }
-            }
-            for (let i = possibleEdges.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [possibleEdges[i], possibleEdges[j]] = [possibleEdges[j], possibleEdges[i]];
-            }
-            const edges = possibleEdges.slice(0, m);
+        let edgeSet = new Set();
+        let edges = [];
 
-            if (representation === 'adjacency-matrix') {
-                let adj = Array.from({ length: n }, () => Array(n).fill(0));
-                edges.forEach(([u, v]) => {
-                    adj[u][v] = 1;
-                    if (type === 'undirected') adj[v][u] = 1;
-                });
-                graphData = adj;
-                displayHtml = '<div class="output-item"><div class="matrix-output">';
-                adj.forEach(row => displayHtml += row.join(' ') + '<br>');
-                displayHtml += '</div></div>';
-            } else if (representation === 'adjacency-list') {
-                let adjList = Array.from({ length: n }, () => []);
-                edges.forEach(([u, v]) => {
-                    adjList[u].push(v);
-                    if (type === 'undirected') adjList[v].push(u);
-                });
-                graphData = adjList;
-                displayHtml = '<div class="output-item"><div class="graph-output">';
-                adjList.forEach((neigh, i) => displayHtml += `${i}: ${neigh.join(', ')}<br>`);
-                displayHtml += '</div></div>';
-            } else if (representation === 'edge-list') {
-                graphData = edges;
-                displayHtml = '<div class="output-item"><div class="graph-output">';
-                edges.forEach(([u, v]) => displayHtml += `${u} ${v}<br>`);
-                displayHtml += '</div></div>';
-            }
-        }
-        else if (isConnected) {
-            let edges = [];
-            let parent = Array(n).fill(0).map((_, i) => i);
+        if (isConnected && !isBipartite) {
             for (let i = 1; i < n; i++) {
-                let u = i;
-                let v = Math.floor(Math.random() * i); // Random node in 0..i-1
-                edges.push([u, v]);
-            }
-
-            let edgeSet = new Set(edges.map(([u, v]) => type === 'undirected' ? `${Math.min(u, v)}-${Math.max(u, v)}` : `${u}-${v}`));
-            while (edges.length < m) {
-                let u = Math.floor(Math.random() * n);
-                let v = Math.floor(Math.random() * n);
-                if (u === v) continue;
-                let key = type === 'undirected' ? `${Math.min(u, v)}-${Math.max(u, v)}` : `${u}-${v}`;
+                const u = i;
+                const v = Math.floor(Math.random() * i);
+                const key = type === 'undirected' ? `${Math.min(u, v)}-${Math.max(u, v)}` : `${u}-${v}`;
                 if (!edgeSet.has(key)) {
-                    edges.push([u, v]);
                     edgeSet.add(key);
+                    const weight = isWeighted ? Math.floor(Math.random() * 100) + 1 : 1;
+                    edges.push(isWeighted ? [u, v, weight] : [u, v]);
                 }
-            }
-
-            if (representation === 'adjacency-matrix') {
-                let adj = Array.from({ length: n }, () => Array(n).fill(0));
-                edges.forEach(([u, v]) => {
-                    adj[u][v] = 1;
-                    if (type === 'undirected') adj[v][u] = 1;
-                });
-                graphData = adj;
-                displayHtml = '<div class="output-item"><div class="matrix-output">';
-                adj.forEach(row => displayHtml += row.join(' ') + '<br>');
-                displayHtml += '</div></div>';
-            } else if (representation === 'adjacency-list') {
-                let adjList = Array.from({ length: n }, () => []);
-                edges.forEach(([u, v]) => {
-                    adjList[u].push(v);
-                    if (type === 'undirected') adjList[v].push(u);
-                });
-                graphData = adjList;
-                displayHtml = '<div class="output-item"><div class="graph-output">';
-                adjList.forEach((neigh, i) => displayHtml += `${i}: ${neigh.join(', ')}<br>`);
-                displayHtml += '</div></div>';
-            } else if (representation === 'edge-list') {
-                graphData = edges;
-                displayHtml = '<div class="output-item"><div class="graph-output">';
-                edges.forEach(([u, v]) => displayHtml += `${u} ${v}<br>`);
-                displayHtml += '</div></div>';
             }
         }
-        else {
-            if (representation === 'adjacency-matrix') {
-                let adj = [];
-                for (let i = 0; i < n; i++) {
-                    adj.push(new Array(n).fill(0));
-                }
 
-                let edgesAdded = 0;
-                let attempts = 0;
-                const maxAttempts = m * 10;
-
-                while (edgesAdded < m && attempts < maxAttempts) {
-                    const u = Math.floor(Math.random() * n);
-                    const v = Math.floor(Math.random() * n);
-                    attempts++;
-
-                    if (u === v) continue;
-
-                    if (type === 'undirected') {
-                        if (adj[u][v] === 0) {
-                            adj[u][v] = 1;
-                            adj[v][u] = 1;
-                            edgesAdded++;
-                        }
-                    } else {
-                        if (adj[u][v] === 0) {
-                            adj[u][v] = 1;
-                            edgesAdded++;
-                        }
-                    }
-                }
-
-                graphData = adj;
-                displayHtml = '<div class="output-item"><div class="matrix-output">';
-                adj.forEach((row, i) => {
-                    displayHtml += row.join(' ') + '<br>';
-                });
-                displayHtml += '</div></div>';
-
-            } else if (representation === 'adjacency-list') {
-                let adjList = [];
-                for (let i = 0; i < n; i++) {
-                    adjList.push([]);
-                }
-
-                let edges = new Set();
-                let edgesAdded = 0;
-                let attempts = 0;
-                const maxAttempts = m * 10;
-
-                while (edgesAdded < m && attempts < maxAttempts) {
-                    const u = Math.floor(Math.random() * n);
-                    const v = Math.floor(Math.random() * n);
-                    attempts++;
-
-                    if (u === v) continue;
-
-                    const edgeKey = type === 'undirected' ?
-                        (u < v ? `${u}-${v}` : `${v}-${u}`) :
-                        `${u}-${v}`;
-
-                    if (!edges.has(edgeKey)) {
-                        edges.add(edgeKey);
-                        adjList[u].push(v);
-                        if (type === 'undirected') {
-                            adjList[v].push(u);
-                        }
-                        edgesAdded++;
-                    }
-                }
-
-                graphData = adjList;
-                displayHtml = '<div class="output-item"><div class="graph-output">';
-                adjList.forEach((neighbors, i) => {
-                    displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
-                });
-                displayHtml += '</div></div>';
-
-            } else if (representation === 'edge-list') {
-                let edgeList = [];
-                let edges = new Set();
-                let edgesAdded = 0;
-                let attempts = 0;
-                const maxAttempts = m * 10;
-
-                while (edgesAdded < m && attempts < maxAttempts) {
-                    const u = Math.floor(Math.random() * n);
-                    const v = Math.floor(Math.random() * n);
-                    attempts++;
-
-                    if (u === v) continue;
-
-                    const edgeKey = type === 'undirected' ?
-                        (u < v ? `${u}-${v}` : `${v}-${u}`) :
-                        `${u}-${v}`;
-
-                    if (!edges.has(edgeKey)) {
-                        edges.add(edgeKey);
-                        edgeList.push([u, v]);
-                        edgesAdded++;
-                    }
-                }
-
-                graphData = edgeList;
-                displayHtml = '<div class="output-item"><div class="graph-output">';
-                edgeList.forEach(edge => {
-                    displayHtml += `${edge[0]} ${edge[1]}<br>`;
-                });
-                displayHtml += '</div></div>';
+        let attempts = 0;
+        while (edges.length < m && attempts < m * 10) {
+            const u = Math.floor(Math.random() * n);
+            const v = Math.floor(Math.random() * n);
+            if (u === v) continue;
+            const key = type === 'undirected' ? `${Math.min(u, v)}-${Math.max(u, v)}` : `${u}-${v}`;
+            if (!edgeSet.has(key)) {
+                edgeSet.add(key);
+                const weight = isWeighted ? Math.floor(Math.random() * 100) + 1 : 1;
+                edges.push(isWeighted ? [u, v, weight] : [u, v]);
             }
+            attempts++;
+        }
+
+        if (representation === 'adjacency-matrix') {
+            let matrix = Array.from({ length: n }, () => Array(n).fill(0));
+            for (let [u, v, w] of edges) {
+                matrix[u][v] = w;
+                if (type === 'undirected') matrix[v][u] = w;
+            }
+            graphData = matrix;
+            displayHtml = '<div class="output-item"><div class="matrix-output">';
+            matrix.forEach(row => displayHtml += row.map(v => String(v).padStart(3, ' ')).join(' ') + '<br>');
+            displayHtml += '</div></div>';
+
+        } else if (representation === 'adjacency-list') {
+            let adjList = Array.from({ length: n }, () => []);
+            for (let [u, v, w] of edges) {
+                if (isWeighted) {
+                    adjList[u].push({ node: v, weight: w });
+                    if (type === 'undirected') adjList[v].push({ node: u, weight: w });
+                } else {
+                    adjList[u].push(v);
+                    if (type === 'undirected') adjList[v].push(u);
+                }
+            }
+            graphData = adjList;
+            displayHtml = '<div class="output-item"><div class="graph-output">';
+            adjList.forEach((neigh, i) => {
+                const formatted = neigh.map(n => typeof n === 'object' ? `${n.node}(${n.weight})` : n).join(', ');
+                displayHtml += `${i}: ${formatted}<br>`;
+            });
+            displayHtml += '</div></div>';
+
+        } else if (representation === 'edge-list') {
+            graphData = edges;
+            displayHtml = '<div class="output-item"><div class="graph-output">';
+            edges.forEach(([u, v, w]) => {
+                displayHtml += `${u} ${v}${isWeighted ? ` (weight: ${w})` : ''}<br>`;
+            });
+            displayHtml += '</div></div>';
         }
 
         currentGeneratedData = graphData;
@@ -772,7 +834,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     graphType: type,
                     representation: representation,
                     isConnected: isConnected,
-                    isBipartite: isBipartite
+                    isBipartite: isBipartite,
+                    isWeighted: isWeighted
                 }),
                 credentials: 'include'
             });
@@ -793,6 +856,7 @@ document.addEventListener('DOMContentLoaded', function () {
     buttons.tree.addEventListener('click', async function () {
         const n = parseInt(document.getElementById('numNodes').value);
         const representation = document.getElementById('treeRepresentation').value;
+        const isWeighted = document.getElementById('isWeightedTree').checked;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of nodes', true);

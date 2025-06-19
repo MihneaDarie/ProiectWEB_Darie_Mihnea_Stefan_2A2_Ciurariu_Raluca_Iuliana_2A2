@@ -205,7 +205,7 @@ class GeneratorModel extends Model
         $isDigraph = ($params['graphType'] === 'directed') ? 'y' : 'n';
         oci_bind_by_name($stmtGraph, ":is_digraph", $isDigraph);
 
-        $isWeighted = $params['isWeighted'] ?? 'n';
+        $isWeighted = ($params['isWeighted'] === true || $params['isWeighted'] === 'y') ? 'y' : 'n';
         oci_bind_by_name($stmtGraph, ":is_weighted", $isWeighted);
 
         $representationMap = [
@@ -257,7 +257,7 @@ class GeneratorModel extends Model
         }
         oci_bind_by_name($stmtTree, ":root", $root);
 
-        $isWeighted = $params['isWeighted'] ?? 'n';
+        $isWeighted = ($params['isWeighted'] === true || $params['isWeighted'] === 'y') ? 'y' : 'n';
         oci_bind_by_name($stmtTree, ":is_weighted", $isWeighted);
 
         $representationMap = [
