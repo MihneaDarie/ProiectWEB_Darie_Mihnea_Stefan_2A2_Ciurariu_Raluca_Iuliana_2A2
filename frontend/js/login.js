@@ -115,11 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const roleMsg = createMessage('Redirecting to dashboard...', '#17a2b8', true);
           loginMessage.appendChild(roleMsg);
         }
-        
-        // Redirect after a short delay to show the message
-        setTimeout(() => {
+   
           window.location.href = `/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/index.php?page=${redirectPage}`;
-        }, 1500);
 
       } else {
         console.log('Not entering success branch, data.success =', data.success);
@@ -127,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const errorMsg = createMessage(data.message || 'Login failed. Please try again.', '#dc3545');
         loginMessage.appendChild(errorMsg);
         
-        // Add specific error handling for different scenarios
         if (data.message && data.message.includes('Username does not exist')) {
           username.classList.add("invalid");
           username.placeholder = "Username not found";
@@ -149,9 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const networkErrorMsg = createMessage('Network or server error. Please try again.', '#dc3545');
       loginMessage.appendChild(networkErrorMsg);
 
-      const retryMsg = createMessage('Please check your internet connection and try again.', '#6c757d', true);
-      loginMessage.appendChild(retryMsg);
-      
+  
       submitButton.disabled = false;
       submitSpan.textContent = originalText;
     }

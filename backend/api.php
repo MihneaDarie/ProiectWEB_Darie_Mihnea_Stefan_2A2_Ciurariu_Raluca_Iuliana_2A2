@@ -19,7 +19,6 @@ if (!$conn) {
     exit;
 }
 
-// Helper function to check admin role
 function checkAdminRole() {
 
 
