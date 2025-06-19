@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tree: document.getElementById('generateTree')
     };
 
-    // Create visualize button
     const visualizeButton = document.createElement('button');
     visualizeButton.className = 'visualize-button';
     visualizeButton.id = 'visualizeGraph';
@@ -143,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Create SVG
         const svgWidth = 600;
         const svgHeight = 400;
         const nodeRadius = 20;
