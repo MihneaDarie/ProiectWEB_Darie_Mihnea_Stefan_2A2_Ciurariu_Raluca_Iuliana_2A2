@@ -244,15 +244,12 @@ class GeneratorModel extends Model
                 VALUES (:id, :nodes, :edges, :root, :is_weighted, :representation, :data)";
         $stmtTree = oci_parse($this->connection, $sqlTree);
 
-        // Bind dataset ID and number of nodes
         oci_bind_by_name($stmtTree, ":id", $dataSetId);
         oci_bind_by_name($stmtTree, ":nodes", $params['nodes']);
 
-        // Number of edges in a tree is always (n - 1)
         $edges = $params['nodes'] - 1;
         oci_bind_by_name($stmtTree, ":edges", $edges);
 
-        // Determine root index (for parent list)
         $root = 0;
         if (
             ($params['representation'] ?? '') === 'parent-list' &&
@@ -268,11 +265,9 @@ class GeneratorModel extends Model
         }
         oci_bind_by_name($stmtTree, ":root", $root);
 
-        // Handle is_weighted flag
         $isWeighted = ($params['isWeighted'] === true || $params['isWeighted'] === 'y') ? 'y' : 'n';
         oci_bind_by_name($stmtTree, ":is_weighted", $isWeighted);
 
-        // Map frontend representation names to database enum
         $representationMap = [
             'adjacency-matrix' => 'adjacency_matrix',
             'adjacency-list' => 'adjacency_list',
@@ -282,30 +277,24 @@ class GeneratorModel extends Model
         $representation = $representationMap[$frontendRep] ?? 'parent_list';
         oci_bind_by_name($stmtTree, ":representation", $representation);
 
-        // Prepare the data CLOB
         $clob = oci_new_descriptor($this->connection, OCI_D_LOB);
 
-        // Serialize data depending on type
         if (
             $representation === 'parent_list' &&
             is_array($data) &&
             array_key_exists('parents', $data) &&
             array_key_exists('weights', $data)
         ) {
-            // weighted parent list
             $dataString = json_encode($data);
         } elseif ($representation === 'parent_list' && is_array($data) && array_is_list($data)) {
-            // unweighted parent list
             $dataString = implode(',', $data);
         } else {
-            // adjacency list or matrix or fallback
             $dataString = json_encode($data);
         }
 
         $clob->writetemporary($dataString, OCI_TEMP_CLOB);
         oci_bind_by_name($stmtTree, ":data", $clob, -1, SQLT_CLOB);
 
-        // Execute and commit
         $result = oci_execute($stmtTree, OCI_DEFAULT);
         if (!$result) {
             $clob->free();

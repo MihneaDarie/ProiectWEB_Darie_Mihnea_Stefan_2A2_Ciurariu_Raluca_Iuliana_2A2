@@ -1210,18 +1210,13 @@ body {
     margin: 16px 0 0 0;
 }
 
-/* Add this to your CSS to isolate the graph visualization */
-
 .output-item {
-    /* Reset any inherited styles */
     all: initial;
-    /* Then apply only what's needed */
     font-family: inherit;
     display: block;
 }
 
 .graph-visualization {
-    /* Reset and isolate */
     all: initial;
     display: block;
     text-align: center;
@@ -1230,7 +1225,6 @@ body {
 }
 
 .graph-visualization svg {
-    /* Ensure no inherited transforms or filters */
     transform: none !important;
     filter: none !important;
     -webkit-filter: none !important;
@@ -1239,19 +1233,16 @@ body {
 }
 
 .graph-visualization svg * {
-    /* Reset all SVG children */
     transform-origin: center !important;
     transform-box: fill-box !important;
 }
 
-/* Specific fix for circles */
 .graph-visualization svg circle {
     transform: none !important;
     filter: none !important;
     box-shadow: none !important;
     -webkit-filter: none !important;
     opacity: 1 !important;
-    /* Ensure no pseudo-elements */
     position: relative !important;
 }
 
@@ -1260,7 +1251,6 @@ body {
     display: none !important;
 }
 
-/* Ensure dataset viewer wrapper doesn't affect SVG */
 .dataset-viewer-wrapper .output-item {
     background: transparent !important;
     border: none !important;
