@@ -147,7 +147,7 @@ body, html {
 
 @media (min-width: 1200px) {
     .content-wrapper {
-        grid-template-columns: minmax(300px, 450px) 1fr;
+        grid-template-columns: minmax(300px,450px) minmax(0,1fr);
     }
 }
 
@@ -455,6 +455,7 @@ button.loading::after {
     min-height: 400px;
     max-height: 70vh;
     overflow-y: auto;
+     overflow-x:auto;  
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -785,6 +786,7 @@ button.loading::after {
     width: auto;
     display: flex;
     align-items: center;
+    gap: 0.4rem;
     position: relative;
     overflow: hidden;
     height: 42px;
@@ -799,6 +801,11 @@ button.loading::after {
 
 .visualize-button:active {
     transform: translateY(0);
+}
+
+.visualize-button svg {
+    width: 16px;
+    height: 16px;
 }
 
 .graph-visualization {
