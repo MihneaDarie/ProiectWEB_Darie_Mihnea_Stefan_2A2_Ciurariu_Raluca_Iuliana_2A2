@@ -245,6 +245,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+     function showCopyFeedback() {
+        const originalText = copyButton.innerHTML;
+        copyButton.classList.add('copied');
+        copyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"/>
+            </svg>
+            Copied!
+        `;
+
+        setTimeout(() => {
+            copyButton.classList.remove('copied');
+            copyButton.innerHTML = originalText;
+        }, 2000);
+    }
+
 
     function fallbackCopyTextToClipboard(text) {
         const textArea = document.createElement("textarea");
@@ -270,80 +286,84 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.removeChild(textArea);
     }
 
-    function showCopyFeedback() {
-        const originalText = copyButton.innerHTML;
-        copyButton.classList.add('copied');
-        copyButton.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20,6 9,17 4,12"/>
-            </svg>
-            Copied!
-        `;
-
-        setTimeout(() => {
-            copyButton.classList.remove('copied');
-            copyButton.innerHTML = originalText;
-        }, 2000);
-    }
-
-
     function copyToClipboard() {
-        const outputContent = outputArea.querySelector('.output-content');
-        if (!outputContent) {
-            return;
-        }
+    const outputContent = outputArea.querySelector('.output-content');
+    if (!outputContent) {
+        return;
+    }
 
-        let textToCopy = '';
-        const outputItem = outputContent.querySelector('.output-item');
-        if (outputItem) {
-            const numberArrayOutput = outputItem.querySelector('.number-array-output');
-            const stringOutput = outputItem.querySelector('.string-output');
-            const matrixOutput = outputItem.querySelector('.matrix-output');
-            const treeOutput = outputItem.querySelector('.tree-output');
-            const graphOutput = outputItem.querySelector('.graph-output');
+    let textToCopy = '';
+    const outputItem = outputContent.querySelector('.output-item');
+    if (outputItem) {
+        const numberArrayOutput = outputItem.querySelector('.number-array-output');
+        const stringOutput = outputItem.querySelector('.string-output');
+        const matrixOutput = outputItem.querySelector('.matrix-output');
+        const treeOutput = outputItem.querySelector('.tree-output');
+        const graphOutput = outputItem.querySelector('.graph-output');
 
-            if (numberArrayOutput) {
-                textToCopy = numberArrayOutput.textContent.trim();
-            } else if (stringOutput) {
-                textToCopy = stringOutput.textContent.trim();
-            } else if (matrixOutput) {
-                let matrixText = matrixOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-                textToCopy = matrixText.split('\n')
-                    .map(line => line.trimStart())
-                    .filter(line => line.length > 0)
-                    .join('\n');
-            } else if (treeOutput) {
-                let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-                textToCopy = treeText.split('\n')
-                    .map(l => l.trim())
-                    .filter(l => l.length)
-                    .join('\n');
-            } else if (graphOutput) {
-                let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-                textToCopy = graphText.split('\n')
-                    .map(line => line.trimStart())
-                    .filter(line => line.length > 0)
-                    .join('\n');
-            } else {
-                let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-                textToCopy = itemText.split('\n')
-                    .map(line => line.trimStart())
-                    .filter(line => line.length > 0)
-                    .join('\n');
-            }
-        }
-
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showCopyFeedback();
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                fallbackCopyTextToClipboard(textToCopy);
-            });
+        if (numberArrayOutput) {
+            textToCopy = numberArrayOutput.textContent.trim().replace(/,\s*/g, ' ');
+        } else if (stringOutput) {
+            textToCopy = stringOutput.textContent.trim();
+        } else if (matrixOutput) {
+            let matrixText = matrixOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+            textToCopy = matrixText.split('\n')
+                .map(line => line.trimStart())
+                .filter(line => line.length > 0)
+                .join('\n');
+        } else if (treeOutput) {
+            let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+            textToCopy = treeText.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length)
+                .filter(l => !l.startsWith('Node:'))
+                .map(l => {
+                    if (l.startsWith('Parent:')) {
+                        return l.substring(7).trim();
+                    }
+                    if (l.startsWith('Weight:')) {
+                        return l.substring(7).trim();
+                    }
+                    return l.replace(/,\s*/g, ' ');
+                })
+                .join('\n');
+        } else if (graphOutput) {
+            let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+            textToCopy = graphText.split('\n')
+                .map(line => {
+                    line = line.trimStart();
+                    if (line.includes('weight:')) {
+                        return line.replace(/\(weight:\s*(\d+)\)/, ' $1');
+                    }
+                    else if (line.includes(': ')) {
+                        let content = line.substring(line.indexOf(': ') + 2);
+                        content = content.replace(/(\d+)\((\d+)\)/g, '$1 $2');
+                        return content.replace(/,\s*/g, ' ');
+                    }
+                    return line;
+                })
+                .filter(line => line.length > 0)
+                .join('\n');
         } else {
-            fallbackCopyTextToClipboard(textToCopy);
+            let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+            textToCopy = itemText.split('\n')
+                .map(line => line.trimStart().replace(/,\s*/g, ' '))
+                .filter(line => line.length > 0)
+                .join('\n');
         }
     }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            showCopyFeedback();
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            fallbackCopyTextToClipboard(textToCopy);
+        });
+    } else {
+        fallbackCopyTextToClipboard(textToCopy);
+    }
+}
 
     function exportToCSV() {
         if (!currentGeneratedData) return;
@@ -990,10 +1010,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 treeData = { parents: parent, weights: weights };
                 displayHtml = `
                 <div class="output-item">
-                    <div class="tree-output">
-                        Node:   ${Array.from({ length: n }, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br>
-                        Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}<br>
-                        Weight: ${weights.map(w => String(w).padStart(3, ' ')).join(' ')}
+                    <div class="tree-output">Node:   ${Array.from({ length: n }, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br>Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}<br>Weight: ${weights.map(w => String(w).padStart(3, ' ')).join(' ')}
                     </div>
                 </div>
             `;
@@ -1006,9 +1023,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 treeData = parent;
                 displayHtml = `
                 <div class="output-item">
-                    <div class="tree-output">
-                        Node:   ${Array.from({ length: n }, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br>
-                        Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
+                    <div class="tree-output">Node:   ${Array.from({ length: n }, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br>Parent: ${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
                     </div>
                 </div>
             `;
