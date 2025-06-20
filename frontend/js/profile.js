@@ -407,7 +407,6 @@ class ProfileManager {
         let representation = meta.representation || 'adjacency-list';
         let isWeighted = !!meta.isWeighted;
 
-        // Try to auto-detect representation if not provided
         if (!representation) {
             if (Array.isArray(graphData) && graphData.length > 0) {
                 if (Array.isArray(graphData[0]) && typeof graphData[0][0] === 'number') {
@@ -423,7 +422,6 @@ class ProfileManager {
         let edges = [];
         let weights = {};
 
-        // --- Collect edges & weights ---
         if (representation === 'edge-list') {
             for (let edge of graphData) {
                 let [u, v, w] = edge;
@@ -470,13 +468,11 @@ class ProfileManager {
             }
         }
 
-        // --- SVG layout ---
         const svgWidth = 900, svgHeight = 600;
         const nodeRadius = 22, arrowSize = 10;
         const centerX = svgWidth / 2, centerY = svgHeight / 2;
         const radius = Math.min(svgWidth, svgHeight) * 0.42;
 
-        // --- Position nodes in a circle ---
         let nodePositions = [];
         for (let i = 0; i < vertices; i++) {
             const angle = (2 * Math.PI * i) / vertices - Math.PI / 2;
@@ -486,7 +482,6 @@ class ProfileManager {
             });
         }
 
-        // --- SVG drawing ---
         let svg = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" class="svg-graph">\n`;
 
         if (graphType === 'directed') {
@@ -499,13 +494,11 @@ class ProfileManager {
             </defs>`;
         }
 
-        // Draw edges first
         edges.forEach(([u, v]) => {
             const start = nodePositions[u];
             const end = nodePositions[v];
 
             if (u === v) {
-                // Self-loop
                 const loopRadius = 34;
                 const angle = (2 * Math.PI * u) / vertices - Math.PI / 2;
                 svg += `<path d="M ${start.x},${start.y}
@@ -513,7 +506,6 @@ class ProfileManager {
                     fill="none" stroke="#666" stroke-width="2" 
                     ${graphType === 'directed' ? 'marker-end="url(#arrowhead)"' : ''} />`;
             } else {
-                // Standard edge
                 const dx = end.x - start.x, dy = end.y - start.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 const offsetStart = nodeRadius / dist;
@@ -526,7 +518,6 @@ class ProfileManager {
                         stroke="#666" stroke-width="2" 
                         ${graphType === 'directed' ? 'marker-end="url(#arrowhead)"' : ''} />`;
 
-                // Draw weight if needed
                 if (isWeighted && typeof weights[`${u}-${v}`] !== "undefined") {
                     const midX = (x1 + x2) / 2;
                     const midY = (y1 + y2) / 2;
@@ -536,7 +527,6 @@ class ProfileManager {
             }
         });
 
-        // Draw nodes
         for (let i = 0; i < vertices; i++) {
             const pos = nodePositions[i];
             svg += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeRadius}" fill="#4a5568" stroke="#2d3748" stroke-width="2"/>`;
@@ -548,6 +538,24 @@ class ProfileManager {
     }
 
 
+
+    formatDateSafe(dateString) {
+        try {
+            if (!dateString || dateString === 'Invalid Date') {
+                return 'Data necunoscută';
+            }
+
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return 'Data necunoscută';
+            }
+
+            return this.formatDate(dateString);
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'Data necunoscută';
+        }
+    }
 
     formatDateSafe(dateString) {
         try {
@@ -667,30 +675,58 @@ class ProfileManager {
 
 
             if (type === 'tree') {
-                let parent;
+                let parsed;
                 try {
-                    if (typeof rawData === 'string') {
-                        parent = JSON.parse(rawData);
-                    } else if (Array.isArray(rawData)) {
-                        parent = rawData;
-                    } else {
-                        parent = String(rawData).split(',').map(x => parseInt(x));
-                    }
-
-                    if (!Array.isArray(parent)) {
-                        parent = String(parent).split(',').map(x => parseInt(x));
-                    }
+                    parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 } catch {
-                    parent = String(rawData).replace(/[\[\]\s]/g, '').split(',').map(x => parseInt(x));
+                    parsed = rawData;
                 }
 
-                const nodes = parent.length;
-                return `<div class="output-item">
-                        <div class="tree-output">
-                    Node:&nbsp;&nbsp;${Array.from({ length: nodes }, (_, i) => String(i).padStart(3, ' ')).join(' ')}\n
-                    Parent:${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
-                        </div>
-                    </div>`;
+                const htmlLines = [];
+                const pad = val => String(val).padStart(3, ' ');
+
+                if (parsed && typeof parsed === 'object' && 'parents' in parsed && 'weights' in parsed) {
+                    const { parents, weights } = parsed;
+                    const nodes = parents.length;
+                    htmlLines.push('Node:   ' + Array.from({ length: nodes }, (_, i) => pad(i)).join(' '));
+                    htmlLines.push('Parent: ' + parents.map(p => pad(p)).join(' '));
+                    htmlLines.push('Weight: ' + weights.map(w => pad(w)).join(' '));
+
+                } else if (
+                    Array.isArray(parsed) &&
+                    parsed.length &&
+                    typeof parsed[0] === 'object' &&
+                    Array.isArray(parsed[0]) &&
+                    parsed[0].length &&
+                    typeof parsed[0][0] === 'object' &&
+                    'node' in parsed[0][0] &&
+                    'weight' in parsed[0][0]
+                ) {
+                    parsed.forEach((neighbors, i) => {
+                        const formatted = neighbors.map(n => `${n.node}(${n.weight})`).join(', ');
+                        htmlLines.push(`${i}: ${formatted}`);
+                    });
+
+                } else if (
+                    Array.isArray(parsed) &&
+                    parsed.length &&
+                    Array.isArray(parsed[0]) &&
+                    parsed[0].every(cell => typeof cell === 'number')
+                ) {
+                    parsed.forEach(row => {
+                        htmlLines.push(row.map(pad).join(' '));
+                    });
+
+                } else if (Array.isArray(parsed)) {
+                    const nodes = parsed.length;
+                    htmlLines.push('Node:   ' + Array.from({ length: nodes }, (_, i) => pad(i)).join(' '));
+                    htmlLines.push('Parent: ' + parsed.map(pad).join(' '));
+
+                } else {
+                    htmlLines.push(safeHTML(JSON.stringify(parsed, null, 2)));
+                }
+
+                return `<div class="output-item"><div class="tree-output">${htmlLines.join('\n')}</div></div>`;
             }
 
             const displayData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2);
@@ -705,7 +741,6 @@ class ProfileManager {
                 </div>`;
         }
     }
-
 
     formatTypeName(type) {
         const typeNames = {
