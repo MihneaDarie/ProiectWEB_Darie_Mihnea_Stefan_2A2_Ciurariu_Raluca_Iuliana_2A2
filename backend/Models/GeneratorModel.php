@@ -213,7 +213,7 @@ class GeneratorModel extends Model
             'adjacency-list' => 'adjacency_list',
             'edge-list' => 'edge_list'
         ];
-        
+
         $frontendRep = $params['representation'] ?? 'adjacency-matrix';
         $representation = $representationMap[$frontendRep] ?? 'adjacency_matrix';
         oci_bind_by_name($stmtGraph, ":representation", $representation);
@@ -241,46 +241,71 @@ class GeneratorModel extends Model
     private function insert_tree($dataSetId, $data, $params)
     {
         $sqlTree = "INSERT INTO tree (id, nodes, edges, root, is_weighted, representation, data) 
-                    VALUES (:id, :nodes, :edges, :root, :is_weighted, :representation, :data)";
+                VALUES (:id, :nodes, :edges, :root, :is_weighted, :representation, :data)";
         $stmtTree = oci_parse($this->connection, $sqlTree);
 
+        // Bind dataset ID and number of nodes
         oci_bind_by_name($stmtTree, ":id", $dataSetId);
         oci_bind_by_name($stmtTree, ":nodes", $params['nodes']);
 
+        // Number of edges in a tree is always (n - 1)
         $edges = $params['nodes'] - 1;
         oci_bind_by_name($stmtTree, ":edges", $edges);
 
+        // Determine root index (for parent list)
         $root = 0;
-        if ($params['representation'] === 'parent-list' && is_array($data)) {
-            $root = array_search(-1, $data);
-            if ($root === false) $root = 0;
+        if (
+            ($params['representation'] ?? '') === 'parent-list' &&
+            is_array($data)
+        ) {
+            if (array_key_exists('parents', $data) && is_array($data['parents'])) {
+                $root = array_search(-1, $data['parents']);
+            } elseif (array_is_list($data)) {
+                $root = array_search(-1, $data);
+            }
+            if ($root === false)
+                $root = 0;
         }
         oci_bind_by_name($stmtTree, ":root", $root);
 
+        // Handle is_weighted flag
         $isWeighted = ($params['isWeighted'] === true || $params['isWeighted'] === 'y') ? 'y' : 'n';
         oci_bind_by_name($stmtTree, ":is_weighted", $isWeighted);
 
+        // Map frontend representation names to database enum
         $representationMap = [
             'adjacency-matrix' => 'adjacency_matrix',
             'adjacency-list' => 'adjacency_list',
             'parent-list' => 'parent_list'
         ];
-        
         $frontendRep = $params['representation'] ?? 'parent-list';
         $representation = $representationMap[$frontendRep] ?? 'parent_list';
         oci_bind_by_name($stmtTree, ":representation", $representation);
 
-        if ($representation === 'parent_list' && is_array($data)) {
+        // Prepare the data CLOB
+        $clob = oci_new_descriptor($this->connection, OCI_D_LOB);
+
+        // Serialize data depending on type
+        if (
+            $representation === 'parent_list' &&
+            is_array($data) &&
+            array_key_exists('parents', $data) &&
+            array_key_exists('weights', $data)
+        ) {
+            // weighted parent list
+            $dataString = json_encode($data);
+        } elseif ($representation === 'parent_list' && is_array($data) && array_is_list($data)) {
+            // unweighted parent list
             $dataString = implode(',', $data);
-            $clob = oci_new_descriptor($this->connection, OCI_D_LOB);
-            $clob->writetemporary($dataString, OCI_TEMP_CLOB);
         } else {
-            $clob = oci_new_descriptor($this->connection, OCI_D_LOB);
-            $clob->writetemporary(json_encode($data), OCI_TEMP_CLOB);
+            // adjacency list or matrix or fallback
+            $dataString = json_encode($data);
         }
-        
+
+        $clob->writetemporary($dataString, OCI_TEMP_CLOB);
         oci_bind_by_name($stmtTree, ":data", $clob, -1, SQLT_CLOB);
 
+        // Execute and commit
         $result = oci_execute($stmtTree, OCI_DEFAULT);
         if (!$result) {
             $clob->free();
@@ -296,5 +321,6 @@ class GeneratorModel extends Model
             'dataSetId' => $dataSetId
         ];
     }
+
 
 }

@@ -287,282 +287,274 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    // Funcție îmbunătățită pentru copy care gestionează arbori cu greutăți
-function copyToClipboard() {
-    const outputContent = outputArea.querySelector('.output-content');
-    if (!outputContent) {
-        return;
-    }
+    function copyToClipboard() {
+        const outputContent = outputArea.querySelector('.output-content');
+        if (!outputContent) {
+            return;
+        }
 
-    let textToCopy = '';
-    const outputItem = outputContent.querySelector('.output-item');
-    if (outputItem) {
-        const numberArrayOutput = outputItem.querySelector('.number-array-output');
-        const stringOutput = outputItem.querySelector('.string-output');
-        const matrixOutput = outputItem.querySelector('.matrix-output');
-        const treeOutput = outputItem.querySelector('.tree-output');
-        const graphOutput = outputItem.querySelector('.graph-output');
+        let textToCopy = '';
+        const outputItem = outputContent.querySelector('.output-item');
+        if (outputItem) {
+            const numberArrayOutput = outputItem.querySelector('.number-array-output');
+            const stringOutput = outputItem.querySelector('.string-output');
+            const matrixOutput = outputItem.querySelector('.matrix-output');
+            const treeOutput = outputItem.querySelector('.tree-output');
+            const graphOutput = outputItem.querySelector('.graph-output');
 
-        if (numberArrayOutput) {
-            textToCopy = numberArrayOutput.textContent.trim();
-        } else if (stringOutput) {
-            textToCopy = stringOutput.textContent.trim();
-        } else if (matrixOutput) {
-            let matrixText = matrixOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            textToCopy = matrixText.split('\n')
-                .map(line => line.trimStart())
-                .filter(line => line.length > 0)
-                .join('\n');
-        } else if (treeOutput) {
-            let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            // Păstrează formatarea pentru arbori cu greutăți
-            textToCopy = treeText.split('\n')
-                .map(l => l.trim())
-                .filter(l => l.length)
-                .join('\n');
-        } else if (graphOutput) {
-            let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            textToCopy = graphText.split('\n')
-                .map(line => line.trimStart())
-                .filter(line => line.length > 0)
-                .join('\n');
+            if (numberArrayOutput) {
+                textToCopy = numberArrayOutput.textContent.trim();
+            } else if (stringOutput) {
+                textToCopy = stringOutput.textContent.trim();
+            } else if (matrixOutput) {
+                let matrixText = matrixOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = matrixText.split('\n')
+                    .map(line => line.trimStart())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            } else if (treeOutput) {
+                let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = treeText.split('\n')
+                    .map(l => l.trim())
+                    .filter(l => l.length)
+                    .join('\n');
+            } else if (graphOutput) {
+                let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = graphText.split('\n')
+                    .map(line => line.trimStart())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            } else {
+                let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = itemText.split('\n')
+                    .map(line => line.trimStart())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            }
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showCopyFeedback();
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                fallbackCopyTextToClipboard(textToCopy);
+            });
         } else {
-            let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            textToCopy = itemText.split('\n')
-                .map(line => line.trimStart())
-                .filter(line => line.length > 0)
-                .join('\n');
+            fallbackCopyTextToClipboard(textToCopy);
         }
     }
 
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            showCopyFeedback();
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-            fallbackCopyTextToClipboard(textToCopy);
-        });
-    } else {
-        fallbackCopyTextToClipboard(textToCopy);
-    }
-}
+    function exportToCSV() {
+        if (!currentGeneratedData) return;
 
-// Funcție exportToCSV corectă - înlocuiește ambele definiții din codul original
-function exportToCSV() {
-    if (!currentGeneratedData) return;
+        let csvContent = "";
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+        const timestamp = `${dateStr}_${timeStr}`;
+        let filename = `${currentDataType}_${timestamp}.csv`;
 
-    let csvContent = "";
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    const timestamp = `${dateStr}_${timeStr}`;
-    let filename = `${currentDataType}_${timestamp}.csv`;
+        switch (currentDataType) {
+            case 'number_array':
+                csvContent = currentGeneratedData.join(',');
+                break;
 
-    switch (currentDataType) {
-        case 'number_array':
-            csvContent = currentGeneratedData.join(',');
-            break;
-            
-        case 'character_array':
-            csvContent = currentGeneratedData;
-            break;
-            
-        case 'matrix':
-            const isMap = document.getElementById('isMap').checked;
-            const matrixType = isMap ? 'map' : 'numerical';
-            filename = `matrix_${matrixType}_${timestamp}.csv`;
-            
-            csvContent = currentGeneratedData.map(row => row.join(',')).join('\n');
-            break;
-            
-        case 'graph':
-            if (currentGraphMetadata) {
-                const { graphType, representation, isWeighted } = currentGraphMetadata;
-                const weightInfo = isWeighted ? 'weighted' : 'unweighted';
-                filename = `graph_${graphType}_${representation}_${weightInfo}_${timestamp}.csv`;
-                
-                if (representation === 'edge-list') {
-                    if (isWeighted) {
-                        csvContent = 'Source,Target,Weight\n';
-                    } else {
-                        csvContent = 'Source,Target\n';
+            case 'character_array':
+                csvContent = currentGeneratedData;
+                break;
+
+            case 'matrix':
+                const isMap = document.getElementById('isMap').checked;
+                const matrixType = isMap ? 'map' : 'numerical';
+                filename = `matrix_${matrixType}_${timestamp}.csv`;
+
+                csvContent = currentGeneratedData.map(row => row.join(',')).join('\n');
+                break;
+
+            case 'graph':
+                if (currentGraphMetadata) {
+                    const { graphType, representation, isWeighted } = currentGraphMetadata;
+                    const weightInfo = isWeighted ? 'weighted' : 'unweighted';
+                    filename = `graph_${graphType}_${representation}_${weightInfo}_${timestamp}.csv`;
+
+                    if (representation === 'edge-list') {
+                        if (isWeighted) {
+                            csvContent = 'Source,Target,Weight\n';
+                        } else {
+                            csvContent = 'Source,Target\n';
+                        }
+                        csvContent += currentGeneratedData.map(edge => edge.join(',')).join('\n');
+                    } else if (representation === 'adjacency-matrix') {
+                        const vertices = currentGraphMetadata.vertices;
+                        csvContent = 'Node,' + Array.from({ length: vertices }, (_, i) => i).join(',') + '\n';
+                        currentGeneratedData.forEach((row, i) => {
+                            csvContent += `${i},` + row.join(',') + '\n';
+                        });
+                    } else if (representation === 'adjacency-list') {
+                        currentGeneratedData.forEach((neighbors, i) => {
+                            let neighborStr = '';
+                            if (isWeighted) {
+                                neighborStr = neighbors.map(n =>
+                                    typeof n === 'object' ? `${n.node}(${n.weight})` : n
+                                ).join(',');
+                            } else {
+                                neighborStr = neighbors.join(',');
+                            }
+                            csvContent += neighborStr + '\n';
+                        });
                     }
-                    csvContent += currentGeneratedData.map(edge => edge.join(',')).join('\n');
-                } else if (representation === 'adjacency-matrix') {
-                    const vertices = currentGraphMetadata.vertices;
-                    csvContent = 'Node,' + Array.from({length: vertices}, (_, i) => i).join(',') + '\n';
+                } else {
+                    csvContent = JSON.stringify(currentGeneratedData);
+                }
+                break;
+
+            case 'tree':
+                const treeRepresentation = document.getElementById('treeRepresentation').value;
+                const isWeightedTree = document.getElementById('isWeightedTree').checked;
+                const treeWeightInfo = isWeightedTree ? 'weighted' : 'unweighted';
+                filename = `tree_${treeRepresentation}_${treeWeightInfo}_${timestamp}.csv`;
+
+                if (treeRepresentation === 'parent-list') {
+                    if (isWeightedTree && currentGeneratedData.parents) {
+                        csvContent = 'Node,Parent,Weight\n';
+                        currentGeneratedData.parents.forEach((parent, node) => {
+                            const weight = currentGeneratedData.weights[node];
+                            csvContent += `${node},${parent},${weight}\n`;
+                        });
+                    } else {
+                        csvContent = 'Node,Parent\n';
+                        const parentArray = Array.isArray(currentGeneratedData) ? currentGeneratedData : currentGeneratedData.parents;
+                        parentArray.forEach((parent, node) => {
+                            csvContent += `${node},${parent}\n`;
+                        });
+                    }
+                } else if (treeRepresentation === 'adjacency-matrix') {
+                    const nodes = currentGeneratedData.length;
+                    csvContent = 'Node,' + Array.from({ length: nodes }, (_, i) => i).join(',') + '\n';
                     currentGeneratedData.forEach((row, i) => {
                         csvContent += `${i},` + row.join(',') + '\n';
                     });
-                } else if (representation === 'adjacency-list') {
+                } else if (treeRepresentation === 'adjacency-list') {
                     currentGeneratedData.forEach((neighbors, i) => {
-                        let neighborStr = '';
-                        if (isWeighted) {
-                            neighborStr = neighbors.map(n => 
-                                typeof n === 'object' ? `${n.node}(${n.weight})` : n
-                            ).join(',');
+                        if (isWeightedTree && neighbors.length > 0 && typeof neighbors[0] === 'object') {
+                            const neighborStr = neighbors.map(n => `${n.node}(${n.weight})`).join(',');
+                            csvContent += neighborStr + '\n';
                         } else {
-                            neighborStr = neighbors.join(',');
+                            csvContent += neighbors.join(',') + '\n';
                         }
-                        csvContent += neighborStr + '\n';
                     });
                 }
-            } else {
-                csvContent = JSON.stringify(currentGeneratedData);
-            }
-            break;
-            
-        case 'tree':
-            const treeRepresentation = document.getElementById('treeRepresentation').value;
-            const isWeightedTree = document.getElementById('isWeightedTree').checked;
-            const treeWeightInfo = isWeightedTree ? 'weighted' : 'unweighted';
-            filename = `tree_${treeRepresentation}_${treeWeightInfo}_${timestamp}.csv`;
-            
-            if (treeRepresentation === 'parent-list') {
-                if (isWeightedTree && currentGeneratedData.parents) {
-                    // Pentru arbori cu greutăți, structura este {parents: [...], weights: [...]}
-                    csvContent = 'Node,Parent,Weight\n';
-                    currentGeneratedData.parents.forEach((parent, node) => {
-                        const weight = currentGeneratedData.weights[node];
-                        csvContent += `${node},${parent},${weight}\n`;
-                    });
-                } else {
-                    // Pentru arbori fără greutăți, structura este array simplu
-                    csvContent = 'Node,Parent\n';
-                    const parentArray = Array.isArray(currentGeneratedData) ? currentGeneratedData : currentGeneratedData.parents;
-                    parentArray.forEach((parent, node) => {
-                        csvContent += `${node},${parent}\n`;
-                    });
-                }
-            } else if (treeRepresentation === 'adjacency-matrix') {
-                const nodes = currentGeneratedData.length;
-                csvContent = 'Node,' + Array.from({length: nodes}, (_, i) => i).join(',') + '\n';
-                currentGeneratedData.forEach((row, i) => {
-                    csvContent += `${i},` + row.join(',') + '\n';
-                });
-            } else if (treeRepresentation === 'adjacency-list') {
-                currentGeneratedData.forEach((neighbors, i) => {
-                    if (isWeightedTree && neighbors.length > 0 && typeof neighbors[0] === 'object') {
-                        // Pentru vecini cu greutăți: [{node: 1, weight: 45}, ...]
-                        const neighborStr = neighbors.map(n => `${n.node}(${n.weight})`).join(',');
-                        csvContent += neighborStr + '\n';
-                    } else {
-                        // Pentru vecini simpli: [1, 2, 3]
-                        csvContent += neighbors.join(',') + '\n';
-                    }
-                });
-            }
-            break;
+                break;
+        }
+
+        downloadFile(csvContent, filename, 'text/csv');
     }
 
-    downloadFile(csvContent, filename, 'text/csv');
-}
+    function exportToJSON() {
+        if (!currentGeneratedData) return;
 
-// Funcție exportToJSON corectă pentru arbori cu greutăți
-function exportToJSON() {
-    if (!currentGeneratedData) return;
+        let jsonData = {};
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+        const timestamp = `${dateStr}_${timeStr}`;
+        let filename = `${currentDataType}_${timestamp}.json`;
 
-    let jsonData = {};
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    const timestamp = `${dateStr}_${timeStr}`;
-    let filename = `${currentDataType}_${timestamp}.json`;
-
-    switch (currentDataType) {
-        case 'number_array':
-            jsonData = {
-                type: 'numerical_array',
-                data: currentGeneratedData,
-                metadata: {
-                    length: currentGeneratedData.length,
-                    min: Math.min(...currentGeneratedData),
-                    max: Math.max(...currentGeneratedData),
-                    sortOrder: document.getElementById('sortOrder').value || 'none'
-                }
-            };
-            break;
-            
-        case 'character_array':
-            jsonData = {
-                type: 'character_array',
-                data: currentGeneratedData,
-                metadata: {
-                    length: currentGeneratedData.length,
-                    characterSet: document.getElementById('charSet').value
-                }
-            };
-            break;
-            
-        case 'matrix':
-            const isMap = document.getElementById('isMap').checked;
-            const matrixType = isMap ? 'map' : 'numerical';
-            filename = `matrix_${matrixType}_${timestamp}.json`;
-            
-            jsonData = {
-                type: 'matrix',
-                subtype: matrixType,
-                data: currentGeneratedData,
-                metadata: {
-                    rows: currentGeneratedData.length,
-                    columns: currentGeneratedData[0].length,
-                    isMap: isMap,
-                    minValue: isMap ? 0 : parseInt(document.getElementById('minMatrixValue').value),
-                    maxValue: isMap ? 1 : parseInt(document.getElementById('maxMatrixValue').value)
-                }
-            };
-            break;
-            
-        case 'graph':
-            if (currentGraphMetadata) {
-                const { graphType, representation, isWeighted } = currentGraphMetadata;
-                const weightInfo = isWeighted ? 'weighted' : 'unweighted';
-                filename = `graph_${graphType}_${representation}_${weightInfo}_${timestamp}.json`;
-                
+        switch (currentDataType) {
+            case 'number_array':
                 jsonData = {
-                    type: 'graph',
-                    subtype: `${graphType}_${representation}`,
+                    type: 'numerical_array',
                     data: currentGeneratedData,
                     metadata: {
-                        ...currentGraphMetadata,
-                        representation: representation,
-                        graphType: graphType,
-                        isWeighted: isWeighted
+                        length: currentGeneratedData.length,
+                        min: Math.min(...currentGeneratedData),
+                        max: Math.max(...currentGeneratedData),
+                        sortOrder: document.getElementById('sortOrder').value || 'none'
                     }
                 };
-            } else {
-                jsonData = {
-                    type: 'graph',
-                    data: currentGeneratedData,
-                    metadata: {}
-                };
-            }
-            break;
-            
-        case 'tree':
-            const treeRepresentation = document.getElementById('treeRepresentation').value;
-            const isWeightedTree = document.getElementById('isWeightedTree').checked;
-            const treeWeightInfo = isWeightedTree ? 'weighted' : 'unweighted';
-            filename = `tree_${treeRepresentation}_${treeWeightInfo}_${timestamp}.json`;
-            
-            jsonData = {
-                type: 'tree',
-                subtype: `${treeRepresentation}`,
-                data: currentGeneratedData,
-                metadata: {
-                    nodes: isWeightedTree && currentGeneratedData.parents ? 
-                           currentGeneratedData.parents.length : 
-                           (Array.isArray(currentGeneratedData) ? currentGeneratedData.length : 0),
-                    representation: treeRepresentation,
-                    isWeighted: isWeightedTree
-                }
-            };
-            break;
-    }
+                break;
 
-    const jsonContent = JSON.stringify(jsonData, null, 2);
-    downloadFile(jsonContent, filename, 'application/json');
-}
+            case 'character_array':
+                jsonData = {
+                    type: 'character_array',
+                    data: currentGeneratedData,
+                    metadata: {
+                        length: currentGeneratedData.length,
+                        characterSet: document.getElementById('charSet').value
+                    }
+                };
+                break;
+
+            case 'matrix':
+                const isMap = document.getElementById('isMap').checked;
+                const matrixType = isMap ? 'map' : 'numerical';
+                filename = `matrix_${matrixType}_${timestamp}.json`;
+
+                jsonData = {
+                    type: 'matrix',
+                    subtype: matrixType,
+                    data: currentGeneratedData,
+                    metadata: {
+                        rows: currentGeneratedData.length,
+                        columns: currentGeneratedData[0].length,
+                        isMap: isMap,
+                        minValue: isMap ? 0 : parseInt(document.getElementById('minMatrixValue').value),
+                        maxValue: isMap ? 1 : parseInt(document.getElementById('maxMatrixValue').value)
+                    }
+                };
+                break;
+
+            case 'graph':
+                if (currentGraphMetadata) {
+                    const { graphType, representation, isWeighted } = currentGraphMetadata;
+                    const weightInfo = isWeighted ? 'weighted' : 'unweighted';
+                    filename = `graph_${graphType}_${representation}_${weightInfo}_${timestamp}.json`;
+
+                    jsonData = {
+                        type: 'graph',
+                        subtype: `${graphType}_${representation}`,
+                        data: currentGeneratedData,
+                        metadata: {
+                            ...currentGraphMetadata,
+                            representation: representation,
+                            graphType: graphType,
+                            isWeighted: isWeighted
+                        }
+                    };
+                } else {
+                    jsonData = {
+                        type: 'graph',
+                        data: currentGeneratedData,
+                        metadata: {}
+                    };
+                }
+                break;
+
+            case 'tree':
+                const treeRepresentation = document.getElementById('treeRepresentation').value;
+                const isWeightedTree = document.getElementById('isWeightedTree').checked;
+                const treeWeightInfo = isWeightedTree ? 'weighted' : 'unweighted';
+                filename = `tree_${treeRepresentation}_${treeWeightInfo}_${timestamp}.json`;
+
+                jsonData = {
+                    type: 'tree',
+                    subtype: `${treeRepresentation}`,
+                    data: currentGeneratedData,
+                    metadata: {
+                        nodes: isWeightedTree && currentGeneratedData.parents ?
+                            currentGeneratedData.parents.length :
+                            (Array.isArray(currentGeneratedData) ? currentGeneratedData.length : 0),
+                        representation: treeRepresentation,
+                        isWeighted: isWeightedTree
+                    }
+                };
+                break;
+        }
+
+        const jsonContent = JSON.stringify(jsonData, null, 2);
+        downloadFile(jsonContent, filename, 'application/json');
+    }
     function downloadFile(content, filename, mimeType) {
         const blob = new Blob([content], { type: mimeType });
         const url = window.URL.createObjectURL(blob);
@@ -822,7 +814,7 @@ function exportToJSON() {
         const isWeighted = document.getElementById('isWeightedGraph').checked;
         const isConnected = document.getElementById('isConnected').checked;
         const isBipartite = document.getElementById('isBipartite').checked;
-        
+
         let visualizationActive = false;
 
         if (isNaN(n) || n < 1) {
@@ -967,36 +959,36 @@ function exportToJSON() {
     });
 
     buttons.tree.addEventListener('click', async function () {
-    const n = parseInt(document.getElementById('numNodes').value);
-    const representation = document.getElementById('treeRepresentation').value;
-    const isWeighted = document.getElementById('isWeightedTree').checked;
+        const n = parseInt(document.getElementById('numNodes').value);
+        const representation = document.getElementById('treeRepresentation').value;
+        const isWeighted = document.getElementById('isWeightedTree').checked;
 
-    if (isNaN(n) || n < 1) {
-        displayOutput('Please enter a valid number of nodes', true);
-        return;
-    }
+        if (isNaN(n) || n < 1) {
+            displayOutput('Please enter a valid number of nodes', true);
+            return;
+        }
 
-    setLoading(this, true);
+        setLoading(this, true);
 
-    let treeData;
-    let displayHtml = '';
+        let treeData;
+        let displayHtml = '';
 
-    if (representation === 'parent-list') {
-        let parent = new Array(n).fill(-1);
-        parent[0] = -1;
+        if (representation === 'parent-list') {
+            let parent = new Array(n).fill(-1);
+            parent[0] = -1;
 
-        if (isWeighted) {
-            let weights = new Array(n).fill(0);
-            weights[0] = 0; 
+            if (isWeighted) {
+                let weights = new Array(n).fill(0);
+                weights[0] = 0;
 
-            for (let i = 1; i < n; i++) {
-                const p = Math.floor(Math.random() * i);
-                parent[i] = p;
-                weights[i] = Math.floor(Math.random() * 100) + 1; 
-            }
+                for (let i = 1; i < n; i++) {
+                    const p = Math.floor(Math.random() * i);
+                    parent[i] = p;
+                    weights[i] = Math.floor(Math.random() * 100) + 1;
+                }
 
-            treeData = { parents: parent, weights: weights };
-            displayHtml = `
+                treeData = { parents: parent, weights: weights };
+                displayHtml = `
                 <div class="output-item">
                     <div class="tree-output">
                         Node:   ${Array.from({ length: n }, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br>
@@ -1005,14 +997,14 @@ function exportToJSON() {
                     </div>
                 </div>
             `;
-        } else {
-            for (let i = 1; i < n; i++) {
-                const p = Math.floor(Math.random() * i);
-                parent[i] = p;
-            }
+            } else {
+                for (let i = 1; i < n; i++) {
+                    const p = Math.floor(Math.random() * i);
+                    parent[i] = p;
+                }
 
-            treeData = parent;
-            displayHtml = `
+                treeData = parent;
+                displayHtml = `
                 <div class="output-item">
                     <div class="tree-output">
                         Node:   ${Array.from({ length: n }, (_, i) => String(i).padStart(3, ' ')).join(' ')}<br>
@@ -1020,122 +1012,112 @@ function exportToJSON() {
                     </div>
                 </div>
             `;
-        }
-
-    } else if (representation === 'adjacency-list') {
-        let adjList = [];
-        for (let i = 0; i < n; i++) {
-            adjList.push([]);
-        }
-
-        for (let i = 1; i < n; i++) {
-            const parent = Math.floor(Math.random() * i);
-            
-            if (isWeighted) {
-                const weight = Math.floor(Math.random() * 100) + 1;
-                adjList[parent].push({ node: i, weight: weight });
-                adjList[i].push({ node: parent, weight: weight });
-            } else {
-                adjList[parent].push(i);
-                adjList[i].push(parent);
             }
-        }
 
-        treeData = adjList;
-        displayHtml = '<div class="output-item"><div class="graph-output">';
-        adjList.forEach((neighbors, i) => {
-            if (isWeighted) {
-                const formatted = neighbors.map(n => `${n.node}(${n.weight})`).join(', ');
-                displayHtml += `${i}: ${formatted}<br>`;
-            } else {
-                displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
+        } else if (representation === 'adjacency-list') {
+            let adjList = [];
+            for (let i = 0; i < n; i++) {
+                adjList.push([]);
             }
-        });
-        displayHtml += '</div></div>';
 
-    } else if (representation === 'adjacency-matrix') {
-        let adj = [];
-        for (let i = 0; i < n; i++) {
-            adj.push(new Array(n).fill(0));
-        }
+            for (let i = 1; i < n; i++) {
+                const parent = Math.floor(Math.random() * i);
 
-        for (let i = 1; i < n; i++) {
-            const parent = Math.floor(Math.random() * i);
-            
-            if (isWeighted) {
-                const weight = Math.floor(Math.random() * 100) + 1;
-                adj[parent][i] = weight;
-                adj[i][parent] = weight;
-            } else {
-                adj[parent][i] = 1;
-                adj[i][parent] = 1;
+                if (isWeighted) {
+                    const weight = Math.floor(Math.random() * 100) + 1;
+                    adjList[parent].push({ node: i, weight: weight });
+                    adjList[i].push({ node: parent, weight: weight });
+                } else {
+                    adjList[parent].push(i);
+                    adjList[i].push(parent);
+                }
             }
+
+            treeData = adjList;
+            displayHtml = '<div class="output-item"><div class="graph-output">';
+            adjList.forEach((neighbors, i) => {
+                if (isWeighted) {
+                    const formatted = neighbors.map(n => `${n.node}(${n.weight})`).join(', ');
+                    displayHtml += `${i}: ${formatted}<br>`;
+                } else {
+                    displayHtml += `${i}: ${neighbors.join(', ')}<br>`;
+                }
+            });
+            displayHtml += '</div></div>';
+
+        } else if (representation === 'adjacency-matrix') {
+            let adj = [];
+            for (let i = 0; i < n; i++) {
+                adj.push(new Array(n).fill(0));
+            }
+
+            for (let i = 1; i < n; i++) {
+                const parent = Math.floor(Math.random() * i);
+
+                if (isWeighted) {
+                    const weight = Math.floor(Math.random() * 100) + 1;
+                    adj[parent][i] = weight;
+                    adj[i][parent] = weight;
+                } else {
+                    adj[parent][i] = 1;
+                    adj[i][parent] = 1;
+                }
+            }
+
+            treeData = adj;
+            displayHtml = '<div class="output-item"><div class="matrix-output">';
+            adj.forEach((row, i) => {
+                displayHtml += row.map(val => String(val).padStart(3, ' ')).join(' ') + '<br>';
+            });
+            displayHtml += '</div></div>';
         }
 
-        treeData = adj;
-        displayHtml = '<div class="output-item"><div class="matrix-output">';
-        adj.forEach((row, i) => {
-            displayHtml += row.map(val => String(val).padStart(3, ' ')).join(' ') + '<br>';
-        });
-        displayHtml += '</div></div>';
-    }
+        currentGeneratedData = treeData;
+        currentDataType = 'tree';
 
-    currentGeneratedData = treeData;
-    currentDataType = 'tree';
-
-    let backendPayload;
-    if (representation === 'parent-list' && isWeighted && treeData.parents) {
-        backendPayload = {
-            type: 'tree',
-            array: treeData.parents,
-            nodes: n,
-            representation: representation,
-            isWeighted: false
-        };
-    } else {
-        backendPayload = {
+        const backendPayload = {
             type: 'tree',
             array: treeData,
             nodes: n,
             representation: representation,
             isWeighted: isWeighted
         };
-    }
 
-    try {
-        const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(backendPayload),
-            credentials: 'include'
-        });
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        try {
+            const response = await fetch('/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/backend/api.php?page=generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(backendPayload),
+                credentials: 'include'
+            });
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Backend returned invalid response format');
-        }
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
 
-        const data = await response.json();
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Backend returned invalid response format');
+            }
 
-        if (data.success) {
+            const data = await response.json();
+
+            if (data.success) {
+                displayOutput(displayHtml);
+            } else {
+                throw new Error(data.message || 'Failed to generate tree');
+            }
+
+        } catch (error) {
+
             displayOutput(displayHtml);
-        } else {
-            throw new Error(data.message || 'Failed to generate tree');
+            console.warn('Backend communication failed, displaying local result only:', error.message);
+
+        } finally {
+            setLoading(this, false);
         }
-        
-    } catch (error) {
-    
-        displayOutput(displayHtml);
-        console.warn('Backend communication failed, displaying local result only:', error.message);
-        
-    } finally {
-        setLoading(this, false);
-    }
-});
+    });
 });
