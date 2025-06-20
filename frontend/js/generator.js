@@ -731,6 +731,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const isWeighted = document.getElementById('isWeightedGraph').checked;
         const isConnected = document.getElementById('isConnected').checked;
         const isBipartite = document.getElementById('isBipartite').checked;
+        
+        visualizationActive = false;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of vertices', true);
