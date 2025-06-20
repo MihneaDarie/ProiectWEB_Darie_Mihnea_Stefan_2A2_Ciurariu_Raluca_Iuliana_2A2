@@ -1081,10 +1081,8 @@ function exportToJSON() {
     currentGeneratedData = treeData;
     currentDataType = 'tree';
 
-    // Payload pentru backend - trimite doar structura simplă
     let backendPayload;
     if (representation === 'parent-list' && isWeighted && treeData.parents) {
-        // Pentru backend, trimite doar array-ul de părinți
         backendPayload = {
             type: 'tree',
             array: treeData.parents,
