@@ -139,15 +139,15 @@ body, html {
 }
 
 .content-wrapper {
-    display: grid;
-    grid-template-columns: 1fr;
+    display:grid;
+    grid-template-columns: minmax(300px,450px) minmax(0,1fr);
     gap: 2rem;
     flex: 1;
 }
 
 @media (min-width: 1200px) {
     .content-wrapper {
-        grid-template-columns: minmax(300px, 450px) 1fr;
+        grid-template-columns: minmax(300px,450px) minmax(0,1fr);
     }
 }
 
@@ -455,11 +455,13 @@ button.loading::after {
     min-height: 400px;
     max-height: 70vh;
     overflow-y: auto;
+     overflow-x:auto;  
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     width: 100%;
     box-sizing: border-box;
+    min-width:0; 
 }
 
 .output-area:hover {
@@ -489,6 +491,9 @@ button.loading::after {
     font-size: 0.9375rem;
     word-break: break-all;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width:100%;
+    overflow-x:auto;  
+    min-width: 0;
 }
 
 .output-item:hover {
@@ -520,7 +525,7 @@ button.loading::after {
 }
 
 .matrix-output {
-    width: 100%;
+    max-width: 100%;
     overflow: auto;
     font-family: monospace;
     white-space: pre;
@@ -535,7 +540,7 @@ button.loading::after {
 }
 
 .tree-output {
-    width: 100%;
+    max-width:100%; 
     overflow-x: auto;
     overflow-y: hidden;
     font-family: monospace;
@@ -548,10 +553,11 @@ button.loading::after {
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 #e2e8f0;
     box-sizing: border-box;
-    display: flex;
+    display: block;
     flex-direction: column;
     justify-content: center;
 }
+
 
 .tree-output > div {
     white-space: nowrap;
@@ -584,7 +590,6 @@ button.loading::after {
 .number-array-output::-webkit-scrollbar-corner {
     background: transparent;
 }
-
 
 .matrix-output::-webkit-scrollbar {
     height: 8px;
@@ -630,6 +635,38 @@ button.loading::after {
 
 .tree-output::-webkit-scrollbar-corner {
     background: transparent;
+}
+
+.scroll-vertical   { overflow-y: auto;  overflow-x: hidden; }
+.scroll-horizontal { overflow-x: auto;  overflow-y: hidden; }
+.scroll-both       { overflow: auto; }
+
+.number-array-output,
+.string-output {
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;   
+  word-break: break-word;  
+}
+
+.matrix-output {
+  overflow: auto;      
+}
+
+.graph-output {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tree-output {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.matrix-output,
+.graph-output,     
+.tree-output       
+{
+  word-break: normal;     
 }
 
 .error-message {
