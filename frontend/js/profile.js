@@ -28,7 +28,7 @@ class ProfileManager {
 
         this.currentView = null;
         this.currentFilter = 'all';
-        
+
         window.profileManager = this;
         this.init();
     }
@@ -70,11 +70,11 @@ class ProfileManager {
         if (this.elements.deleteBtn) {
             this.elements.deleteBtn.addEventListener('click', () => this.handleDeleteAccount());
         }
-        
+
         if (this.elements.historyBtn) {
             this.elements.historyBtn.addEventListener('click', () => this.handleHistoryClick());
         }
-        
+
         document.addEventListener('click', (e) => this.handleOutsideClick(e));
     }
 
@@ -88,22 +88,22 @@ class ProfileManager {
     async loadHistory(type = null) {
         this.currentView = 'history-list';
         this.currentFilter = type || 'all';
-        
+
         this.elements.panelContent.innerHTML = '<p class="stats-loading">Se încarcă istoricul...</p>';
-        
+
         try {
             const res = await fetch(this.endpoints.history, { credentials: 'include' });
-            
+
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
-            
+
             const text = await res.text();
-            
+
             if (!text) {
                 throw new Error('Empty response from server');
             }
-            
+
             let json;
             try {
                 json = JSON.parse(text);
@@ -111,14 +111,14 @@ class ProfileManager {
                 console.error('Invalid JSON response:', text);
                 throw new Error('Invalid JSON response from server');
             }
-            
+
             if (!json.success) {
                 throw new Error(json.message || 'Unknown error');
             }
-            
+
             const data = json.data || [];
             this.renderHistory(data);
-            
+
         } catch (e) {
             console.error('History load error:', e);
             this.showError(e.message);
@@ -144,7 +144,7 @@ class ProfileManager {
         const tabs = document.createElement('div');
         tabs.className = 'history-tabs';
         tabs.id = 'historyTabs';
-        
+
         types.forEach(t => {
             const btn = document.createElement('button');
             btn.textContent = t === 'all' ? 'All' : this.formatTypeName(t);
@@ -152,7 +152,7 @@ class ProfileManager {
             btn.onclick = () => this.filterHistory(t);
             tabs.appendChild(btn);
         });
-        
+
         mainContainer.appendChild(tabs);
         const contentArea = document.createElement('div');
         contentArea.className = 'history-content-area';
@@ -188,12 +188,12 @@ class ProfileManager {
         event.target.classList.add('active');
         const contentArea = document.getElementById('historyContent');
         contentArea.innerHTML = '';
-        
+
         let filteredRows = this.allHistoryRows;
         if (this.currentFilter !== 'all') {
             filteredRows = this.allHistoryRows.filter(row => row.TYPE === this.currentFilter);
         }
-        
+
         if (!filteredRows.length) {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'history-empty';
@@ -214,16 +214,16 @@ class ProfileManager {
     }
 
     createHistoryList(rows) {
-    const listContainer = document.createElement('div');
-    listContainer.className = 'history-list-container';
+        const listContainer = document.createElement('div');
+        listContainer.className = 'history-list-container';
 
-    rows.forEach(row => {
-        const card = document.createElement('div');
-        card.className = 'history-card';
-        
-        const typeColor = this.getTypeColor(row.TYPE);
-        
-        card.innerHTML = `
+        rows.forEach(row => {
+            const card = document.createElement('div');
+            card.className = 'history-card';
+
+            const typeColor = this.getTypeColor(row.TYPE);
+
+            card.innerHTML = `
             <div class="history-card-header">
                 <span class="history-type" style="background-color: ${typeColor}">${this.formatTypeName(row.TYPE)}</span>
                 <span class="history-date">${this.formatDate(row.CREATED_AT)}</span>
@@ -236,37 +236,37 @@ class ProfileManager {
                 </div>
             </div>
         `;
-        
-        card.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.openDataset(row.ID);
-        };
-        listContainer.appendChild(card);
-    });
 
-    return listContainer;
-}
+            card.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openDataset(row.ID);
+            };
+            listContainer.appendChild(card);
+        });
+
+        return listContainer;
+    }
 
     async openDataset(id) {
         this.currentView = 'dataset-detail';
         const contentArea = document.getElementById('historyContent');
         contentArea.innerHTML = '<p class="stats-loading">Se încarcă detaliile...</p>';
-        
+
         try {
             const url = `${this.endpoints.dataset}&id=${id}`;
             const res = await fetch(url, { credentials: 'include' });
-            
+
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
-            
+
             const text = await res.text();
-            
+
             if (!text) {
                 throw new Error('Empty response from server');
             }
-            
+
             let json;
             try {
                 json = JSON.parse(text);
@@ -274,59 +274,48 @@ class ProfileManager {
                 console.error('Invalid JSON response:', text);
                 throw new Error('Invalid JSON response from server');
             }
-            
+
             if (!json.success) {
                 throw new Error(json.message || 'Failed to load dataset');
             }
-            
+
             if (!json.data) {
                 throw new Error('No data returned from server');
             }
-            
+
             this.renderDatasetDetail(json.data);
-            
+
         } catch (e) {
             console.error('Dataset load error:', e);
             this.showError(e.message);
         }
     }
 
-renderDatasetDetail(data) {
-    console.log('Dataset data received:', data);
+    renderDatasetDetail(data) {
+        const safeData = {
+            ID: data.ID || data.id || 'N/A',
+            TYPE: data.TYPE || data.type || 'unknown',
+            LABEL: data.LABEL || data.label || 'Fără titlu',
+            CREATED_AT: data.CREATED_AT || data.created_at || new Date().toISOString(),
+            DESCRIPTION: data.DESCRIPTION || data.description || '',
+            DATA: data.DATA || data.data || '',
+            METADATA: data.METADATA || data.metadata || {},
+        };
 
-    document.getElementById('historyTabs').style.display = 'none';
-    document.querySelector('.history-header').style.display = 'flex';
-    
-    const contentArea = document.getElementById('historyContent');
-    contentArea.innerHTML = '';
-    
-    const detailContainer = document.createElement('div');
-    detailContainer.className = 'dataset-detail-container';
-    const safeData = {
-        ID: data.ID || data.id || 'N/A',
-        TYPE: data.TYPE || data.type || 'unknown',
-        LABEL: data.LABEL || data.label || 'Fără titlu',
-        CREATED_AT: data.CREATED_AT || data.created_at || new Date().toISOString(),
-        DESCRIPTION: data.DESCRIPTION || data.description || '',
-        DATA: data.DATA || data.data || ''
-    };
-    
-    console.log('Safe data after validation:', safeData);
+        document.getElementById('historyTabs').style.display = 'none';
+        document.querySelector('.history-header').style.display = 'flex';
+        const contentArea = document.getElementById('historyContent');
+        contentArea.innerHTML = '';
+        const detailContainer = document.createElement('div');
+        detailContainer.className = 'dataset-detail-container';
 
-    let dataSize = 0;
-    if (safeData.DATA) {
-        if (typeof safeData.DATA === 'string') {
-            dataSize = safeData.DATA.length;
-        } else {
-            dataSize = JSON.stringify(safeData.DATA).length;
-        }
-    }
-
-    const infoSection = document.createElement('div');
-    infoSection.className = 'dataset-info-section';
-    infoSection.style.setProperty('--type-color', this.getTypeColor(safeData.TYPE));
-    
-    infoSection.innerHTML = `
+        let dataSize = typeof safeData.DATA === 'string'
+            ? safeData.DATA.length
+            : JSON.stringify(safeData.DATA).length;
+        const infoSection = document.createElement('div');
+        infoSection.className = 'dataset-info-section';
+        infoSection.style.setProperty('--type-color', this.getTypeColor(safeData.TYPE));
+        infoSection.innerHTML = `
         <div class="info-grid">
             <div class="info-item type">
                 <span class="info-label">Type:</span>
@@ -348,168 +337,374 @@ renderDatasetDetail(data) {
             </div>
         ` : ''}
     `;
-    
-    detailContainer.appendChild(infoSection);
-    
-    
-    const contentSection = document.createElement('div');
-    contentSection.className = 'dataset-content-section';
-    
-    const contentHeader = document.createElement('div');
-    contentHeader.className = 'content-header';
-    contentHeader.innerHTML = `
-        <h4>Content</h4>
-        <div class="content-actions"></div>
-    `;
-    
-    contentSection.appendChild(contentHeader);
-    
-    const viewerWrapper = document.createElement('div');
-    viewerWrapper.className = 'dataset-viewer-wrapper';
-    
-    const pre = document.createElement('pre');
-    pre.className = 'dataset-viewer';
-    pre.id = `dataset-content-${safeData.ID}`;
+        detailContainer.appendChild(infoSection);
 
-    if (safeData.TYPE === 'tree') {
-        pre.classList.add('tree-output');
+        const contentSection = document.createElement('div');
+        contentSection.className = 'dataset-content-section';
+
+        const contentHeader = document.createElement('div');
+        contentHeader.className = 'content-header';
+        contentHeader.innerHTML = `<h4>Content</h4><div class="content-actions"></div>`;
+        contentSection.appendChild(contentHeader);
+
+        const viewerWrapper = document.createElement('div');
+        viewerWrapper.className = 'dataset-viewer-wrapper';
+
+        let isGraph = safeData.TYPE === 'graph';
+        let vertexCount = 0;
+        let graphMeta = safeData.METADATA || {};
+        let graphData = safeData.DATA;
+        let lastMode = 'text';
+
+        if (typeof graphData === 'string') {
+            try { graphData = JSON.parse(graphData); } catch { graphData = []; }
+        }
+        if (isGraph) {
+            if (typeof graphMeta.vertices === 'number') vertexCount = graphMeta.vertices;
+            else if (Array.isArray(graphData)) vertexCount = graphData.length;
+            else vertexCount = 0;
+
+            if (vertexCount > 0 && vertexCount <= 10) {
+                const visBtn = document.createElement('button');
+                visBtn.textContent = 'Visualize';
+                visBtn.className = 'visualize-graph-btn';
+                let textOutputHTML = '';
+
+                visBtn.onclick = () => {
+                    if (lastMode === 'text') {
+                        viewerWrapper.innerHTML = this.renderGraphSVG(graphData, safeData);
+                        visBtn.textContent = 'Back';
+                        lastMode = 'svg';
+                    } else {
+                        viewerWrapper.innerHTML = textOutputHTML;
+                        visBtn.textContent = 'Visualize';
+                        lastMode = 'text';
+                    }
+                };
+                contentHeader.querySelector('.content-actions').appendChild(visBtn);
+
+                textOutputHTML = `<pre class="dataset-viewer">${this.formatParsedOutputSafe(safeData.TYPE, safeData.DATA)}</pre>`;
+                viewerWrapper.innerHTML = textOutputHTML;
+            } else {
+                viewerWrapper.innerHTML = `<pre class="dataset-viewer">${this.formatParsedOutputSafe(safeData.TYPE, safeData.DATA)}</pre>`;
+            }
+        } else {
+            let pre = document.createElement('pre');
+            pre.className = 'dataset-viewer';
+            if (safeData.TYPE === 'tree') pre.classList.add('tree-output');
+            pre.innerHTML = this.formatParsedOutputSafe(safeData.TYPE, safeData.DATA);
+            viewerWrapper.appendChild(pre);
+        }
+        contentSection.appendChild(viewerWrapper);
+        detailContainer.appendChild(contentSection);
+        contentArea.appendChild(detailContainer);
     }
 
-    const parsedOutput = this.formatParsedOutputSafe(safeData.TYPE, safeData.DATA);
-    pre.innerHTML = parsedOutput;
 
-    viewerWrapper.appendChild(pre);
-    contentSection.appendChild(viewerWrapper);
-    detailContainer.appendChild(contentSection);
-    
-    contentArea.appendChild(detailContainer);
-}
+    renderGraphSVG(graphData, meta = {}) {
+        let vertices = meta.vertices || (Array.isArray(graphData) ? graphData.length : 0);
+        let graphType = meta.graphType || meta.type || 'undirected';
+        let representation = meta.representation || 'adjacency-list';
+        let isWeighted = !!meta.isWeighted;
 
-formatDateSafe(dateString) {
-    try {
-        if (!dateString || dateString === 'Invalid Date') {
-            return 'Data necunoscută';
-        }
-        
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            return 'Data necunoscută';
-        }
-        
-        return this.formatDate(dateString);
-    } catch (error) {
-        console.error('Error formatting date:', error);
-        return 'Data necunoscută';
-    }
-}
-
-formatParsedOutputSafe(type, rawData) {
-    const safeHTML = str =>
-        str.replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-
-    try {
-
-        if (!rawData) {
-            return `<div class="output-item"><div class="matrix-output">Nu există date disponibile</div></div>`;
-        }
-
-        console.log('Parsing data for type:', type, 'Data:', rawData);
-
-        if (type === 'number_array') {
-            let array;
-            if (typeof rawData === 'string') {
-                array = JSON.parse(rawData);
-            } else if (Array.isArray(rawData)) {
-                array = rawData;
-            } else {
-                throw new Error('Format de date invalid pentru number_array');
-            }
-            
-            const text = array.join(', ');
-            return `<div class="output-item"><div class="array-output number-array-output">${safeHTML(text)}</div></div>`;
-        }
-
-        if (type === 'character_array') {
-            let str;
-            if (typeof rawData === 'string') {
-                try {
-                    const parsed = JSON.parse(rawData);
-                    str = Array.isArray(parsed) ? parsed[0] : parsed;
-                } catch {
-                    str = rawData; 
-                }
-            } else if (Array.isArray(rawData)) {
-                str = rawData[0] || rawData.join('');
-            } else {
-                str = String(rawData);
-            }
-            
-            return `<div class="output-item"><div class="array-output character-array-output">${safeHTML(str)}</div></div>`;
-        }
-
-        if (type === 'matrix' || type === 'graph') {
-            let matrix;
-            if (typeof rawData === 'string') {
-                matrix = JSON.parse(rawData);
-            } else if (Array.isArray(rawData)) {
-                matrix = rawData;
-            } else {
-                throw new Error('Format de date invalid pentru matrix/graph');
-            }
-            
-            let html = `<div class="output-item"><div class="matrix-output">`;
-            matrix.forEach(row => {
-                if (Array.isArray(row)) {
-                    html += row.map(val => String(val).padStart(4, ' ')).join(' ') + '\n';
+        // Try to auto-detect representation if not provided
+        if (!representation) {
+            if (Array.isArray(graphData) && graphData.length > 0) {
+                if (Array.isArray(graphData[0]) && typeof graphData[0][0] === 'number') {
+                    representation = 'adjacency-matrix';
+                } else if (Array.isArray(graphData[0]) && Array.isArray(graphData[0][0])) {
+                    representation = 'edge-list';
                 } else {
-                    html += String(row) + '\n';
+                    representation = 'adjacency-list';
                 }
+            }
+        }
+
+        let edges = [];
+        let weights = {};
+
+        // --- Collect edges & weights ---
+        if (representation === 'edge-list') {
+            for (let edge of graphData) {
+                let [u, v, w] = edge;
+                edges.push([u, v]);
+                if (edge.length > 2) {
+                    isWeighted = true;
+                    weights[`${u}-${v}`] = w;
+                }
+            }
+        } else if (representation === 'adjacency-matrix') {
+            vertices = graphData.length;
+            for (let i = 0; i < vertices; i++) {
+                for (let j = 0; j < vertices; j++) {
+                    if (graphData[i][j] !== 0) {
+                        if (graphType === 'undirected' && i > j) continue;
+                        edges.push([i, j]);
+                        if (graphData[i][j] !== 1) {
+                            isWeighted = true;
+                            weights[`${i}-${j}`] = graphData[i][j];
+                        }
+                    }
+                }
+            }
+        } else if (representation === 'adjacency-list') {
+            let seen = new Set();
+            vertices = graphData.length;
+            for (let i = 0; i < vertices; i++) {
+                for (let neighbor of graphData[i]) {
+                    let v, w;
+                    if (typeof neighbor === 'object' && neighbor !== null) {
+                        v = neighbor.node;
+                        w = neighbor.weight;
+                        isWeighted = true;
+                    } else {
+                        v = neighbor;
+                    }
+                    let edgeKey = graphType === 'undirected' ?
+                        `${Math.min(i, v)}-${Math.max(i, v)}` : `${i}-${v}`;
+                    if (graphType === 'undirected' && seen.has(edgeKey)) continue;
+                    edges.push([i, v]);
+                    if (typeof w !== 'undefined') weights[`${i}-${v}`] = w;
+                    if (graphType === 'undirected') seen.add(edgeKey);
+                }
+            }
+        }
+
+        // --- SVG layout ---
+        const svgWidth = 900, svgHeight = 600;
+        const nodeRadius = 22, arrowSize = 10;
+        const centerX = svgWidth / 2, centerY = svgHeight / 2;
+        const radius = Math.min(svgWidth, svgHeight) * 0.42;
+
+        // --- Position nodes in a circle ---
+        let nodePositions = [];
+        for (let i = 0; i < vertices; i++) {
+            const angle = (2 * Math.PI * i) / vertices - Math.PI / 2;
+            nodePositions.push({
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle)
             });
-            html += `</div></div>`;
-            return html;
         }
 
-        if (type === 'tree') {
-            let parent;
-            try {
-                if (typeof rawData === 'string') {
-                    parent = JSON.parse(rawData);
-                } else if (Array.isArray(rawData)) {
-                    parent = rawData;
-                } else {
-                    parent = String(rawData).split(',').map(x => parseInt(x));
+        // --- SVG drawing ---
+        let svg = `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" class="svg-graph">\n`;
+
+        if (graphType === 'directed') {
+            svg += `
+            <defs>
+                <marker id="arrowhead" markerWidth="${arrowSize}" markerHeight="${arrowSize}"
+                        refX="${arrowSize}" refY="${arrowSize / 2}" orient="auto">
+                    <polygon points="0 0, ${arrowSize} ${arrowSize / 2}, 0 ${arrowSize}" fill="#666"/>
+                </marker>
+            </defs>`;
+        }
+
+        // Draw edges first
+        edges.forEach(([u, v]) => {
+            const start = nodePositions[u];
+            const end = nodePositions[v];
+
+            if (u === v) {
+                // Self-loop
+                const loopRadius = 34;
+                const angle = (2 * Math.PI * u) / vertices - Math.PI / 2;
+                svg += `<path d="M ${start.x},${start.y}
+                        A ${loopRadius},${loopRadius} 0 1,1 ${start.x + 1},${start.y + 1}"
+                    fill="none" stroke="#666" stroke-width="2" 
+                    ${graphType === 'directed' ? 'marker-end="url(#arrowhead)"' : ''} />`;
+            } else {
+                // Standard edge
+                const dx = end.x - start.x, dy = end.y - start.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const offsetStart = nodeRadius / dist;
+                const offsetEnd = (nodeRadius + (graphType === 'directed' ? arrowSize : 0)) / dist;
+                const x1 = start.x + dx * offsetStart;
+                const y1 = start.y + dy * offsetStart;
+                const x2 = end.x - dx * offsetEnd;
+                const y2 = end.y - dy * offsetEnd;
+                svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+                        stroke="#666" stroke-width="2" 
+                        ${graphType === 'directed' ? 'marker-end="url(#arrowhead)"' : ''} />`;
+
+                // Draw weight if needed
+                if (isWeighted && typeof weights[`${u}-${v}`] !== "undefined") {
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2;
+                    svg += `<rect x="${midX - 15}" y="${midY - 11}" width="30" height="20" fill="#fff" stroke="none"/>`;
+                    svg += `<text x="${midX}" y="${midY + 5}" text-anchor="middle" font-size="14" fill="#333">${weights[`${u}-${v}`]}</text>`;
                 }
-                
-                if (!Array.isArray(parent)) {
-                    parent = String(parent).split(',').map(x => parseInt(x));
-                }
-            } catch {
-                parent = String(rawData).replace(/[\[\]\s]/g, '').split(',').map(x => parseInt(x));
+            }
+        });
+
+        // Draw nodes
+        for (let i = 0; i < vertices; i++) {
+            const pos = nodePositions[i];
+            svg += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeRadius}" fill="#4a5568" stroke="#2d3748" stroke-width="2"/>`;
+            svg += `<text x="${pos.x}" y="${pos.y + 6}" text-anchor="middle" font-size="16" fill="#fff" font-weight="bold">${i}</text>`;
+        }
+
+        svg += `</svg>`;
+        return `<div class="graph-visualization">${svg}</div>`;
+    }
+
+
+
+    formatDateSafe(dateString) {
+        try {
+            if (!dateString || dateString === 'Invalid Date') {
+                return 'Data necunoscută';
             }
 
-            const nodes = parent.length;
-            return `<div class="output-item">
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return 'Data necunoscută';
+            }
+
+            return this.formatDate(dateString);
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'Data necunoscută';
+        }
+    }
+
+    formatParsedOutputSafe(type, rawData) {
+        const safeHTML = str =>
+            String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+        try {
+
+            if (!rawData) {
+                return `<div class="output-item"><div class="matrix-output">Nu există date disponibile</div></div>`;
+            }
+
+            console.log('Parsing data for type:', type, 'Data:', rawData);
+
+            if (type === 'number_array') {
+                let array;
+                if (typeof rawData === 'string') {
+                    array = JSON.parse(rawData);
+                } else if (Array.isArray(rawData)) {
+                    array = rawData;
+                } else {
+                    throw new Error('Format de date invalid pentru number_array');
+                }
+
+                const text = array.join(', ');
+                return `<div class="output-item"><div class="array-output number-array-output">${safeHTML(text)}</div></div>`;
+            }
+
+            if (type === 'character_array') {
+                let str;
+                if (typeof rawData === 'string') {
+                    try {
+                        const parsed = JSON.parse(rawData);
+                        str = Array.isArray(parsed) ? parsed[0] : parsed;
+                    } catch {
+                        str = rawData;
+                    }
+                } else if (Array.isArray(rawData)) {
+                    str = rawData[0] || rawData.join('');
+                } else {
+                    str = String(rawData);
+                }
+
+                return `<div class="output-item"><div class="array-output character-array-output">${safeHTML(str)}</div></div>`;
+            }
+
+            if (type === 'matrix' || type === 'graph') {
+                let arr = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
+
+                let html = `<div class="output-item"><div class="matrix-output">`;
+
+                if (
+                    Array.isArray(arr) &&
+                    arr.length > 0 &&
+                    Array.isArray(arr[0])
+                ) {
+                    arr.forEach((row, i) => {
+                        if (row.length > 0 && typeof row[0] === "object" && row[0] !== null && "node" in row[0] && "weight" in row[0]) {
+                            const formatted = row.map(obj => {
+                                let w = obj.weight;
+                                if (typeof w === 'object' && w !== null) w = Object.values(w)[0];
+                                return `${safeHTML(obj.node)}(${safeHTML(w)})`;
+                            }).join(', ');
+                            html += `${i}: ${formatted}\n`;
+                        } else {
+                            html += `${i}: ${row.map(val => safeHTML(val)).join(', ')}\n`;
+                        }
+                    });
+                }
+                else if (
+                    Array.isArray(arr) &&
+                    arr.length > 0 &&
+                    Array.isArray(arr[0]) &&
+                    (typeof arr[0][0] === "number" || typeof arr[0][0] === "string")
+                ) {
+                    arr.forEach(row => {
+                        html += row.map(val => String(val).padStart(4, ' ')).join(' ') + '\n';
+                    });
+                }
+                else if (Array.isArray(arr)) {
+                    arr.forEach(row => {
+                        if (Array.isArray(row)) {
+                            html += row.join(' ') + '\n';
+                        } else if (typeof row === "object" && row !== null && "node" in row && "weight" in row) {
+                            html += `${safeHTML(row.node)}(${safeHTML(row.weight)})\n`;
+                        } else {
+                            html += safeHTML(row) + '\n';
+                        }
+                    });
+                } else {
+                    html += safeHTML(JSON.stringify(arr, null, 2));
+                }
+
+                html += `</div></div>`;
+                return html;
+            }
+
+
+            if (type === 'tree') {
+                let parent;
+                try {
+                    if (typeof rawData === 'string') {
+                        parent = JSON.parse(rawData);
+                    } else if (Array.isArray(rawData)) {
+                        parent = rawData;
+                    } else {
+                        parent = String(rawData).split(',').map(x => parseInt(x));
+                    }
+
+                    if (!Array.isArray(parent)) {
+                        parent = String(parent).split(',').map(x => parseInt(x));
+                    }
+                } catch {
+                    parent = String(rawData).replace(/[\[\]\s]/g, '').split(',').map(x => parseInt(x));
+                }
+
+                const nodes = parent.length;
+                return `<div class="output-item">
                         <div class="tree-output">
                     Node:&nbsp;&nbsp;${Array.from({ length: nodes }, (_, i) => String(i).padStart(3, ' ')).join(' ')}\n
                     Parent:${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
                         </div>
                     </div>`;
-        }
+            }
 
-        const displayData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2);
-        return `<div class="output-item"><div class="matrix-output">${safeHTML(displayData)}</div></div>`;
-        
-    } catch (err) {
-        console.error('Error parsing data:', err, 'Type:', type, 'Raw data:', rawData);
-        const errorData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2);
-        return `<div class="output-item">
+            const displayData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2);
+            return `<div class="output-item"><div class="matrix-output">${safeHTML(displayData)}</div></div>`;
+
+        } catch (err) {
+            console.error('Error parsing data:', err, 'Type:', type, 'Raw data:', rawData);
+            const errorData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2);
+            return `<div class="output-item">
                     <div class="error-message">Eroare la parsarea datelor: ${err.message}</div>
                     <div class="matrix-output">${safeHTML(errorData)}</div>
                 </div>`;
+        }
     }
-}
 
 
     formatTypeName(type) {
@@ -538,7 +733,7 @@ formatParsedOutputSafe(type, rawData) {
         const date = new Date(dateString);
         const now = new Date();
         const diff = now - date;
-        
+
         if (diff < 3600000) {
             const minutes = Math.floor(diff / 60000);
             return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
@@ -600,7 +795,7 @@ formatParsedOutputSafe(type, rawData) {
         if (e.target.closest('.history-card')) {
             return;
         }
-        
+
         if (this.elements.expandedPanel.classList.contains('active') &&
             !this.elements.expandedPanel.contains(e.target) &&
             !this.elements.statsBtn.contains(e.target) &&
@@ -623,7 +818,7 @@ formatParsedOutputSafe(type, rawData) {
         this.elements.statsBtn.classList.remove('active');
         this.elements.editBtn.classList.remove('active');
         this.elements.historyBtn.classList.remove('active');
-        
+
 
         setTimeout(() => {
             this.elements.panelContent.innerHTML = '';

@@ -117,7 +117,7 @@ body {
     width: 90%;
     max-width: 900px;
     height: 85%; 
-    max-height: 700px; 
+    max-height: 1200px; 
     background-color: rgba(255, 255, 255, 0.95);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     border-radius: 20px;
@@ -1174,4 +1174,96 @@ body {
         padding: 2px 8px;
     }
 }
+}
+
+.visualize-graph-btn {
+    margin-bottom: 1rem;
+    margin-top: .5rem;
+    padding: .5rem 1rem;
+    background: #f39c12;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.visualize-graph-btn:hover {
+    background: #e67e22;
+}
+
+
+.visualize-history-btn {
+    margin-left: 10px;
+    background: #f39c12;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+.visualize-history-btn:hover {
+    background: #e67e22;
+}
+.graph-visualization {
+    text-align: center;
+    margin: 16px 0 0 0;
+}
+
+/* Add this to your CSS to isolate the graph visualization */
+
+.output-item {
+    /* Reset any inherited styles */
+    all: initial;
+    /* Then apply only what's needed */
+    font-family: inherit;
+    display: block;
+}
+
+.graph-visualization {
+    /* Reset and isolate */
+    all: initial;
+    display: block;
+    text-align: center;
+    margin: 16px 0 0 0;
+    font-family: inherit;
+}
+
+.graph-visualization svg {
+    /* Ensure no inherited transforms or filters */
+    transform: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+}
+
+.graph-visualization svg * {
+    /* Reset all SVG children */
+    transform-origin: center !important;
+    transform-box: fill-box !important;
+}
+
+/* Specific fix for circles */
+.graph-visualization svg circle {
+    transform: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    /* Ensure no pseudo-elements */
+    position: relative !important;
+}
+
+.graph-visualization svg circle::before,
+.graph-visualization svg circle::after {
+    display: none !important;
+}
+
+/* Ensure dataset viewer wrapper doesn't affect SVG */
+.dataset-viewer-wrapper .output-item {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
