@@ -34,21 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     visualizeButton.id = 'visualizeGraph';
     visualizeButton.style.display = 'none';
     visualizeButton.title = 'Visualize Graph';
-    visualizeButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <circle cx="4" cy="6" r="2"/>
-            <circle cx="20" cy="6" r="2"/>
-            <circle cx="4" cy="18" r="2"/>
-            <circle cx="20" cy="18" r="2"/>
-            <line x1="12" y1="9" x2="12" y2="3"/>
-            <line x1="9.5" y1="10.5" x2="6" y2="7"/>
-            <line x1="14.5" y1="10.5" x2="18" y2="7"/>
-            <line x1="9.5" y1="13.5" x2="6" y2="17"/>
-            <line x1="14.5" y1="13.5" x2="18" y2="17"/>
-        </svg>
-        Visualize
-    `;
+    visualizeButton.innerHTML = ` Visualize`;
 
     const outputButtons = document.querySelector('.output-buttons');
     outputButtons.insertBefore(visualizeButton, copyButton);
@@ -80,16 +66,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (currentDataType === 'graph' && currentGraphMetadata && currentGraphMetadata.vertices <= 10) {
             visualizeButton.style.display = 'block';
             if (!visualizationActive) {
-                visualizeButton.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" ... ></svg>
-                    Visualize
-                `;
+                visualizeButton.innerHTML = `Visualize`;
                 visualizeButton.title = "Visualize Graph";
             } else {
-                visualizeButton.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" ... ></svg>
-                    Back
-                `;
+                visualizeButton.innerHTML = `Back`;
                 visualizeButton.title = "Back";
             }
         } else {
@@ -731,8 +711,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const isWeighted = document.getElementById('isWeightedGraph').checked;
         const isConnected = document.getElementById('isConnected').checked;
         const isBipartite = document.getElementById('isBipartite').checked;
-        
-        visualizationActive = false;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of vertices', true);
