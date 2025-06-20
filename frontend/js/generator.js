@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const exportCSVButton = document.getElementById('exportCSV');
     const exportJSONButton = document.getElementById('exportJSON');
 
+    let visualizationActive = false;
+    let lastGraphDisplayHtml = '';
+
     let currentGeneratedData = null;
     let currentDataType = null;
     let currentGraphMetadata = null;
@@ -76,6 +79,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (currentDataType === 'graph' && currentGraphMetadata && currentGraphMetadata.vertices <= 10) {
             visualizeButton.style.display = 'block';
+            if (!visualizationActive) {
+                visualizeButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" ... ></svg>
+                    Visualize
+                `;
+                visualizeButton.title = "Visualize Graph";
+            } else {
+                visualizeButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" ... ></svg>
+                    Back
+                `;
+                visualizeButton.title = "Back";
+            }
         } else {
             visualizeButton.style.display = 'none';
         }
@@ -142,14 +158,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        const svgWidth = 600;
-        const svgHeight = 400;
+        const svgWidth = 900;
+        const svgHeight = 600;
         const nodeRadius = 20;
         const arrowSize = 10;
 
         const centerX = svgWidth / 2;
         const centerY = svgHeight / 2;
-        const radius = Math.min(svgWidth, svgHeight) * 0.35;
+        const radius = Math.min(svgWidth, svgHeight) * 0.45;
 
         let nodePositions = [];
         for (let i = 0; i < vertices; i++) {
@@ -232,17 +248,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
         displayOutput(`
             <div class="output-item">
-                <div class="graph-visualization">
-                    ${svgContent}
-                </div>
-                <div class="visualization-info">
-                    <p>Graph Visualization (${vertices} vertices, ${edges.length} edges, ${graphType}${isWeighted ? ', weighted' : ''})</p>
-                </div>
+                <div class="graph-visualization">${svgContent}</div>
             </div>
         `);
     }
 
-    visualizeButton.addEventListener('click', visualizeGraph);
+    visualizeButton.addEventListener('click', function () {
+        if (!visualizationActive) {
+            lastGraphDisplayHtml = outputArea.querySelector('.output-content').innerHTML;
+            visualizationActive = true;
+            visualizeGraph();
+            displayOutput(outputArea.querySelector('.output-content').innerHTML);
+        } else {
+            visualizationActive = false;
+            displayOutput(lastGraphDisplayHtml);
+        }
+    });
 
     function copyToClipboard() {
         const outputContent = outputArea.querySelector('.output-content');
@@ -781,8 +802,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (representation === 'adjacency-matrix') {
             let matrix = Array.from({ length: n }, () => Array(n).fill(0));
             for (let [u, v, w] of edges) {
-                matrix[u][v] = w;
-                if (type === 'undirected') matrix[v][u] = w;
+                matrix[u][v] = (typeof w === "undefined" ? 1 : w);
+                if (type === 'undirected') matrix[v][u] = (typeof w === "undefined" ? 1 : w);
             }
             graphData = matrix;
             displayHtml = '<div class="output-item"><div class="matrix-output">';
@@ -840,6 +861,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const data = await response.json();
             if (data.success) {
+                lastGraphDisplayHtml = displayHtml;
                 displayOutput(displayHtml);
             } else {
                 throw new Error(data.message || 'Failed to generate graph');
