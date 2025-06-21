@@ -571,37 +571,29 @@ class ProfileManager {
                 return;
             }
 
-            if (u === v) {
-                const loopRadius = 32;
-                svg += `<path d="M ${start.x},${start.y}
-                A ${loopRadius},${loopRadius} 0 1,1 ${start.x + 1},${start.y + 1}"
-            fill="none" stroke="#666" stroke-width="2" 
-            ${isDigraph === 'y' ? 'marker-end="url(#arrowhead)"' : ''} />`;
-            } else {
-                const dx = end.x - start.x, dy = end.y - start.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const offsetStart = nodeRadius / dist;
-                const offsetEnd = (nodeRadius + (isDigraph === 'y' ? arrowSize : 0)) / dist;
-                const x1 = start.x + dx * offsetStart;
-                const y1 = start.y + dy * offsetStart;
-                const x2 = end.x - dx * offsetEnd;
-                const y2 = end.y - dy * offsetEnd;
+            const dx = end.x - start.x, dy = end.y - start.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const offsetStart = nodeRadius / dist;
+            const offsetEnd = (nodeRadius + (isDigraph === 'y' ? arrowSize : 0)) / dist;
+            const x1 = start.x + dx * offsetStart;
+            const y1 = start.y + dy * offsetStart;
+            const x2 = end.x - dx * offsetEnd;
+            const y2 = end.y - dy * offsetEnd;
 
-                svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+            svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
                 stroke="#666" stroke-width="2" 
                 ${isDigraph === 'y' ? 'marker-end="url(#arrowhead)"' : ''} />`;
 
-                const weightKey = `${u}-${v}`;
-                if (isWeighted && weights[weightKey] !== undefined) {
-                    const midX = (x1 + x2) / 2;
-                    const midY = (y1 + y2) / 2;
-                    const weight = weights[weightKey];
+            const weightKey = `${u}-${v}`;
+            if (isWeighted && weights[weightKey] !== undefined) {
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2;
+                const weight = weights[weightKey];
 
-                    svg += `<rect x="${midX - 12}" y="${midY - 10}" width="24" height="16" 
+                svg += `<rect x="${midX - 12}" y="${midY - 10}" width="24" height="16" 
                     fill="white" stroke="#ccc" stroke-width="1" rx="2"/>`;
-                    svg += `<text x="${midX}" y="${midY + 3}" text-anchor="middle" 
+                svg += `<text x="${midX}" y="${midY + 3}" text-anchor="middle" 
                     font-size="12" font-weight="bold" fill="#333">${weight}</text>`;
-                }
             }
         });
 
