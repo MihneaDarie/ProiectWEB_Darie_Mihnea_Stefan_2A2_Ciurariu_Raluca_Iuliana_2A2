@@ -173,45 +173,32 @@ document.addEventListener('DOMContentLoaded', function () {
             const start = nodePositions[u];
             const end = nodePositions[v];
 
-            if (u === v) {
-                const loopRadius = 30;
-                const angle = (2 * Math.PI * u) / vertices - Math.PI / 2;
-                const cx = start.x + loopRadius * Math.cos(angle);
-                const cy = start.y + loopRadius * Math.sin(angle);
-                svgContent += `<path d="M ${start.x},${start.y} A ${loopRadius},${loopRadius} 0 1,1 ${start.x + 1},${start.y + 1}" 
-                                     fill="none" stroke="#666" stroke-width="2"`;
-                if (graphType === 'directed') {
-                    svgContent += ` marker-end="url(#arrowhead)"`;
-                }
-                svgContent += `/>`;
-            } else {
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const offsetStart = nodeRadius / distance;
-                const offsetEnd = (nodeRadius + (graphType === 'directed' ? arrowSize : 0)) / distance;
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const offsetStart = nodeRadius / distance;
+            const offsetEnd = (nodeRadius + (graphType === 'directed' ? arrowSize : 0)) / distance;
 
-                const x1 = start.x + dx * offsetStart;
-                const y1 = start.y + dy * offsetStart;
-                const x2 = end.x - dx * offsetEnd;
-                const y2 = end.y - dy * offsetEnd;
+            const x1 = start.x + dx * offsetStart;
+            const y1 = start.y + dy * offsetStart;
+            const x2 = end.x - dx * offsetEnd;
+            const y2 = end.y - dy * offsetEnd;
 
-                svgContent += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" 
+            svgContent += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" 
                                      stroke="#666" stroke-width="2"`;
-                if (graphType === 'directed') {
-                    svgContent += ` marker-end="url(#arrowhead)"`;
-                }
-                svgContent += `/>`;
+            if (graphType === 'directed') {
+                svgContent += ` marker-end="url(#arrowhead)"`;
+            }
+            svgContent += `/>`;
 
-                if (isWeighted && weights[`${u}-${v}`]) {
-                    const midX = (x1 + x2) / 2;
-                    const midY = (y1 + y2) / 2;
-                    svgContent += `<rect x="${midX - 15}" y="${midY - 10}" width="30" height="20" 
+            if (isWeighted && weights[`${u}-${v}`]) {
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2;
+                svgContent += `<rect x="${midX - 15}" y="${midY - 10}" width="30" height="20" 
                                          fill="white" stroke="none"/>`;
-                    svgContent += `<text x="${midX}" y="${midY + 5}" 
+                svgContent += `<text x="${midX}" y="${midY + 5}" 
                                          text-anchor="middle" font-size="14" fill="#333">
                                          ${weights[`${u}-${v}`]}</text>`;
-                }
             }
         });
 
@@ -245,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-     function showCopyFeedback() {
+    function showCopyFeedback() {
         const originalText = copyButton.innerHTML;
         copyButton.classList.add('copied');
         copyButton.innerHTML = `
@@ -287,83 +274,83 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function copyToClipboard() {
-    const outputContent = outputArea.querySelector('.output-content');
-    if (!outputContent) {
-        return;
-    }
+        const outputContent = outputArea.querySelector('.output-content');
+        if (!outputContent) {
+            return;
+        }
 
-    let textToCopy = '';
-    const outputItem = outputContent.querySelector('.output-item');
-    if (outputItem) {
-        const numberArrayOutput = outputItem.querySelector('.number-array-output');
-        const stringOutput = outputItem.querySelector('.string-output');
-        const matrixOutput = outputItem.querySelector('.matrix-output');
-        const treeOutput = outputItem.querySelector('.tree-output');
-        const graphOutput = outputItem.querySelector('.graph-output');
+        let textToCopy = '';
+        const outputItem = outputContent.querySelector('.output-item');
+        if (outputItem) {
+            const numberArrayOutput = outputItem.querySelector('.number-array-output');
+            const stringOutput = outputItem.querySelector('.string-output');
+            const matrixOutput = outputItem.querySelector('.matrix-output');
+            const treeOutput = outputItem.querySelector('.tree-output');
+            const graphOutput = outputItem.querySelector('.graph-output');
 
-        if (numberArrayOutput) {
-            textToCopy = numberArrayOutput.textContent.trim().replace(/,\s*/g, ' ');
-        } else if (stringOutput) {
-            textToCopy = stringOutput.textContent.trim();
-        } else if (matrixOutput) {
-            let matrixText = matrixOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            textToCopy = matrixText.split('\n')
-                .map(line => line.trimStart())
-                .filter(line => line.length > 0)
-                .join('\n');
-        } else if (treeOutput) {
-            let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            textToCopy = treeText.split('\n')
-                .map(l => l.trim())
-                .filter(l => l.length)
-                .filter(l => !l.startsWith('Node:'))
-                .map(l => {
-                    if (l.startsWith('Parent:')) {
-                        return l.substring(7).trim();
-                    }
-                    if (l.startsWith('Weight:')) {
-                        return l.substring(7).trim();
-                    }
-                    return l.replace(/,\s*/g, ' ');
-                })
-                .join('\n');
-        } else if (graphOutput) {
-            let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            textToCopy = graphText.split('\n')
-                .map(line => {
-                    line = line.trimStart();
-                    if (line.includes('weight:')) {
-                        return line.replace(/\(weight:\s*(\d+)\)/, ' $1');
-                    }
-                    else if (line.includes(': ')) {
-                        let content = line.substring(line.indexOf(': ') + 2);
-                        content = content.replace(/(\d+)\((\d+)\)/g, '$1 $2');
-                        return content.replace(/,\s*/g, ' ');
-                    }
-                    return line;
-                })
-                .filter(line => line.length > 0)
-                .join('\n');
+            if (numberArrayOutput) {
+                textToCopy = numberArrayOutput.textContent.trim().replace(/,\s*/g, ' ');
+            } else if (stringOutput) {
+                textToCopy = stringOutput.textContent.trim();
+            } else if (matrixOutput) {
+                let matrixText = matrixOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = matrixText.split('\n')
+                    .map(line => line.trimStart())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            } else if (treeOutput) {
+                let treeText = treeOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = treeText.split('\n')
+                    .map(l => l.trim())
+                    .filter(l => l.length)
+                    .filter(l => !l.startsWith('Node:'))
+                    .map(l => {
+                        if (l.startsWith('Parent:')) {
+                            return l.substring(7).trim();
+                        }
+                        if (l.startsWith('Weight:')) {
+                            return l.substring(7).trim();
+                        }
+                        return l.replace(/,\s*/g, ' ');
+                    })
+                    .join('\n');
+            } else if (graphOutput) {
+                let graphText = graphOutput.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = graphText.split('\n')
+                    .map(line => {
+                        line = line.trimStart();
+                        if (line.includes('weight:')) {
+                            return line.replace(/\(weight:\s*(\d+)\)/, ' $1');
+                        }
+                        else if (line.includes(': ')) {
+                            let content = line.substring(line.indexOf(': ') + 2);
+                            content = content.replace(/(\d+)\((\d+)\)/g, '$1 $2');
+                            return content.replace(/,\s*/g, ' ');
+                        }
+                        return line;
+                    })
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            } else {
+                let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+                textToCopy = itemText.split('\n')
+                    .map(line => line.trimStart().replace(/,\s*/g, ' '))
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            }
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showCopyFeedback();
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                fallbackCopyTextToClipboard(textToCopy);
+            });
         } else {
-            let itemText = outputItem.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-            textToCopy = itemText.split('\n')
-                .map(line => line.trimStart().replace(/,\s*/g, ' '))
-                .filter(line => line.length > 0)
-                .join('\n');
+            fallbackCopyTextToClipboard(textToCopy);
         }
     }
-
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            showCopyFeedback();
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-            fallbackCopyTextToClipboard(textToCopy);
-        });
-    } else {
-        fallbackCopyTextToClipboard(textToCopy);
-    }
-}
 
     function exportToCSV() {
         if (!currentGeneratedData) return;
@@ -835,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const isConnected = document.getElementById('isConnected').checked;
         const isBipartite = document.getElementById('isBipartite').checked;
 
-        let visualizationActive = false;
+        visualizationActive = false;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of vertices', true);
@@ -907,6 +894,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (representation === 'adjacency-matrix') {
             let matrix = Array.from({ length: n }, () => Array(n).fill(0));
             for (let [u, v, w] of edges) {
+                if (u >= n || v >= n) continue;
                 matrix[u][v] = (typeof w === "undefined" ? 1 : w);
                 if (type === 'undirected') matrix[v][u] = (typeof w === "undefined" ? 1 : w);
             }
