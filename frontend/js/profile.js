@@ -235,7 +235,7 @@ class ProfileManager {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'history-empty';
             emptyMsg.innerHTML = `
-                <p>Nu există output-uri ${this.currentFilter !== 'all' ? `de tip ${this.formatTypeName(this.currentFilter)}` : ''}</p>
+                <p>There are no outputs ${this.currentFilter !== 'all' ? `of type ${this.formatTypeName(this.currentFilter)}` : ''} available.</p>
             `;
             contentArea.appendChild(emptyMsg);
         } else {
@@ -332,7 +332,7 @@ class ProfileManager {
         const safeData = {
             ID: data.ID || data.id || 'N/A',
             TYPE: data.TYPE || data.type || 'unknown',
-            LABEL: data.LABEL || data.label || 'Fără titlu',
+            LABEL: data.LABEL || data.label || 'unknown',
             CREATED_AT: data.CREATED_AT || data.created_at || new Date().toISOString(),
             DESCRIPTION: data.DESCRIPTION || data.description || '',
             DATA: data.DATA || data.data || '',
@@ -655,18 +655,18 @@ class ProfileManager {
     formatDateSafe(dateString) {
         try {
             if (!dateString || dateString === 'Invalid Date') {
-                return 'Data necunoscută';
+                return 'Unknown date';
             }
 
             const date = new Date(dateString);
             if (isNaN(date.getTime())) {
-                return 'Data necunoscută';
+                return 'Unknown date';
             }
 
             return this.formatDate(dateString);
         } catch (error) {
             console.error('Error formatting date:', error);
-            return 'Data necunoscută';
+            return 'Unknown date';
         }
     }
 
@@ -679,7 +679,7 @@ class ProfileManager {
 
         try {
             if (!rawData) {
-                return `<div class="output-item"><div class="matrix-output">Nu există date disponibile</div></div>`;
+                return `<div class="output-item"><div class="matrix-output">There are no data available.</div></div>`;
             }
 
             console.log('Parsing data for type:', type, 'Data:', rawData);
@@ -691,7 +691,7 @@ class ProfileManager {
                 } else if (Array.isArray(rawData)) {
                     array = rawData;
                 } else {
-                    throw new Error('Format de date invalid pentru number_array');
+                    throw new Error('Invalid data format for number_array');
                 }
 
                 const text = array.join(', ');
@@ -827,7 +827,7 @@ class ProfileManager {
             console.error('Error parsing data:', err, 'Type:', type, 'Raw data:', rawData);
             const errorData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2);
             return `<div class="output-item">
-                    <div class="error-message">Eroare la parsarea datelor: ${err.message}</div>
+                    <div class="error-message">Error parsing data: ${err.message}</div>
                     <div class="matrix-output">${safeHTML(errorData)}</div>
                 </div>`;
         }
