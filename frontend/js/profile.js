@@ -9,9 +9,10 @@ class ProfileManager {
             overlay: document.querySelector('.overlay'),
             profileContainer: document.querySelector('.profile-container'),
             usernameEl: document.querySelector('.user-name'),
-            logoutBtn: document.querySelector('.logout-button'),
+            logoutBtn: document.querySelector('#logoutBtn'),
             deleteBtn: document.getElementById('deleteBtn'),
-            historyBtn: document.getElementById('historyButton')
+            historyBtn: document.getElementById('historyButton'),
+            welcomeContainer: document.getElementById('welcomeContainer')
         };
 
         this.endpoints = {
@@ -28,6 +29,7 @@ class ProfileManager {
 
         this.currentView = null;
         this.currentFilter = 'all';
+        this.activeButton = null;
 
         window.profileManager = this;
         this.init();
@@ -82,6 +84,41 @@ class ProfileManager {
         if (this.elements.closeBtn) {
             this.elements.closeBtn.innerHTML = '×';
             this.elements.closeBtn.addEventListener('click', () => this.closePanel());
+        }
+    }
+
+    showContent() {
+        if (this.elements.welcomeContainer) {
+            this.elements.welcomeContainer.style.display = 'none';
+        }
+        if (this.elements.panelContent) {
+            this.elements.panelContent.style.display = 'block';
+        }
+    }
+
+    hideContent() {
+        if (this.elements.welcomeContainer) {
+            this.elements.welcomeContainer.style.display = 'flex';
+        }
+        if (this.elements.panelContent) {
+            this.elements.panelContent.style.display = 'none';
+            this.elements.panelContent.innerHTML = '';
+        }
+        this.clearActiveButton();
+    }
+
+    setActiveButton(button) {
+        this.clearActiveButton();
+        if (button) {
+            button.classList.add('active');
+            this.activeButton = button;
+        }
+    }
+
+    clearActiveButton() {
+        if (this.activeButton) {
+            this.activeButton.classList.remove('active');
+            this.activeButton = null;
         }
     }
 
@@ -400,7 +437,6 @@ class ProfileManager {
         contentArea.appendChild(detailContainer);
     }
 
-
     renderGraphSVG(graphData, meta = {}) {
         let vertices = meta.vertices || (Array.isArray(graphData) ? graphData.length : 0);
         let graphType = meta.graphType || meta.type || 'undirected';
@@ -537,44 +573,6 @@ class ProfileManager {
         return `<div class="graph-visualization">${svg}</div>`;
     }
 
-
-
-    formatDateSafe(dateString) {
-        try {
-            if (!dateString || dateString === 'Invalid Date') {
-                return 'Data necunoscută';
-            }
-
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) {
-                return 'Data necunoscută';
-            }
-
-            return this.formatDate(dateString);
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return 'Data necunoscută';
-        }
-    }
-
-    formatDateSafe(dateString) {
-        try {
-            if (!dateString || dateString === 'Invalid Date') {
-                return 'Data necunoscută';
-            }
-
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) {
-                return 'Data necunoscută';
-            }
-
-            return this.formatDate(dateString);
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return 'Data necunoscută';
-        }
-    }
-
     formatParsedOutputSafe(type, rawData) {
         const safeHTML = str =>
             String(str)
@@ -583,7 +581,6 @@ class ProfileManager {
                 .replace(/>/g, '&gt;');
 
         try {
-
             if (!rawData) {
                 return `<div class="output-item"><div class="matrix-output">Nu există date disponibile</div></div>`;
             }
@@ -627,11 +624,7 @@ class ProfileManager {
 
                 let html = `<div class="output-item"><div class="matrix-output">`;
 
-                if (
-                    Array.isArray(arr) &&
-                    arr.length > 0 &&
-                    Array.isArray(arr[0])
-                ) {
+                if (Array.isArray(arr) && arr.length > 0 && Array.isArray(arr[0])) {
                     arr.forEach((row, i) => {
                         if (row.length > 0 && typeof row[0] === "object" && row[0] !== null && "node" in row[0] && "weight" in row[0]) {
                             const formatted = row.map(obj => {
@@ -644,18 +637,11 @@ class ProfileManager {
                             html += `${i}: ${row.map(val => safeHTML(val)).join(', ')}\n`;
                         }
                     });
-                }
-                else if (
-                    Array.isArray(arr) &&
-                    arr.length > 0 &&
-                    Array.isArray(arr[0]) &&
-                    (typeof arr[0][0] === "number" || typeof arr[0][0] === "string")
-                ) {
+                } else if (Array.isArray(arr) && arr.length > 0 && Array.isArray(arr[0]) && (typeof arr[0][0] === "number" || typeof arr[0][0] === "string")) {
                     arr.forEach(row => {
                         html += row.map(val => String(val).padStart(4, ' ')).join(' ') + '\n';
                     });
-                }
-                else if (Array.isArray(arr)) {
+                } else if (Array.isArray(arr)) {
                     arr.forEach(row => {
                         if (Array.isArray(row)) {
                             html += row.join(' ') + '\n';
@@ -672,7 +658,6 @@ class ProfileManager {
                 html += `</div></div>`;
                 return html;
             }
-
 
             if (type === 'tree') {
                 let parsed;
@@ -691,37 +676,19 @@ class ProfileManager {
                     htmlLines.push('Node:   ' + Array.from({ length: nodes }, (_, i) => pad(i)).join(' '));
                     htmlLines.push('Parent: ' + parents.map(p => pad(p)).join(' '));
                     htmlLines.push('Weight: ' + weights.map(w => pad(w)).join(' '));
-
-                } else if (
-                    Array.isArray(parsed) &&
-                    parsed.length &&
-                    typeof parsed[0] === 'object' &&
-                    Array.isArray(parsed[0]) &&
-                    parsed[0].length &&
-                    typeof parsed[0][0] === 'object' &&
-                    'node' in parsed[0][0] &&
-                    'weight' in parsed[0][0]
-                ) {
+                } else if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === 'object' && Array.isArray(parsed[0]) && parsed[0].length && typeof parsed[0][0] === 'object' && 'node' in parsed[0][0] && 'weight' in parsed[0][0]) {
                     parsed.forEach((neighbors, i) => {
                         const formatted = neighbors.map(n => `${n.node}(${n.weight})`).join(', ');
                         htmlLines.push(`${i}: ${formatted}`);
                     });
-
-                } else if (
-                    Array.isArray(parsed) &&
-                    parsed.length &&
-                    Array.isArray(parsed[0]) &&
-                    parsed[0].every(cell => typeof cell === 'number')
-                ) {
+                } else if (Array.isArray(parsed) && parsed.length && Array.isArray(parsed[0]) && parsed[0].every(cell => typeof cell === 'number')) {
                     parsed.forEach(row => {
                         htmlLines.push(row.map(pad).join(' '));
                     });
-
                 } else if (Array.isArray(parsed)) {
                     const nodes = parsed.length;
                     htmlLines.push('Node:   ' + Array.from({ length: nodes }, (_, i) => pad(i)).join(' '));
                     htmlLines.push('Parent: ' + parsed.map(pad).join(' '));
-
                 } else {
                     htmlLines.push(safeHTML(JSON.stringify(parsed, null, 2)));
                 }
@@ -798,66 +765,39 @@ class ProfileManager {
     }
 
     async handleStatsClick() {
-        if (this.elements.expandedPanel.classList.contains('active')) {
-            this.closePanel();
-            return;
-        }
-
-        this.openPanel();
+        this.setActiveButton(this.elements.statsBtn);
+        this.showContent();
         await this.loadStatistics();
     }
 
     async handleEditClick() {
-        if (this.elements.expandedPanel.classList.contains('active')) {
-            this.closePanel();
-            return;
-        }
-
-        this.openPanel();
+        this.setActiveButton(this.elements.editBtn);
+        this.showContent();
         await this.loadEditForm();
     }
 
     async handleHistoryClick() {
-        if (this.elements.expandedPanel.classList.contains('active')) {
-            this.closePanel();
-            return;
-        }
-        this.openPanel();
+        this.setActiveButton(this.elements.historyBtn);
+        this.showContent();
         await this.loadHistory();
     }
 
     handleOutsideClick(e) {
-        if (e.target.closest('.history-card')) {
+
+        if (e.target.closest('.sidebar') || e.target.closest('.panel-content')) {
             return;
         }
-
-        if (this.elements.expandedPanel.classList.contains('active') &&
-            !this.elements.expandedPanel.contains(e.target) &&
-            !this.elements.statsBtn.contains(e.target) &&
-            !this.elements.editBtn.contains(e.target) &&
-            !this.elements.historyBtn.contains(e.target)) {
-            this.closePanel();
+        if (this.elements.panelContent && this.elements.panelContent.style.display === 'block') {
+            this.hideContent();
         }
     }
 
     openPanel() {
-        this.elements.expandedPanel.classList.add('active');
-        this.elements.profileContainer.classList.add('panel-open');
-        if (this.elements.overlay) this.elements.overlay.classList.add('active');
+        this.showContent();
     }
 
     closePanel() {
-        this.elements.expandedPanel.classList.remove('active');
-        this.elements.profileContainer.classList.remove('panel-open');
-        if (this.elements.overlay) this.elements.overlay.classList.remove('active');
-        this.elements.statsBtn.classList.remove('active');
-        this.elements.editBtn.classList.remove('active');
-        this.elements.historyBtn.classList.remove('active');
-
-
-        setTimeout(() => {
-            this.elements.panelContent.innerHTML = '';
-        }, 300);
+        this.hideContent();
     }
 
     async loadStatistics() {

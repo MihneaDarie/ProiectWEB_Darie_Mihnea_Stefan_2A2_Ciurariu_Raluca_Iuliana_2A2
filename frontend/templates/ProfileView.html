@@ -7,36 +7,49 @@
     <link rel="stylesheet" href="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/templates/profile.css">
 </head>
 <body>
-    <main class="main-content">
-        <div class="profile-container">
-            <h1 class="user-name"></h1>
+     <main class="main-content">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="user-name"></h2>
+            </div>
             
-            <div class="buttons-container">
-                <button id="statsButton" class="profile-button">
+            <div class="sidebar-buttons">
+                <button id="statsButton" class="sidebar-button">
                     Statistics
                 </button>
-                <button id="editButton" class="profile-button">
+                <button id="editButton" class="sidebar-button">
                     Edit Profile
                 </button>
-                 <button id="historyButton" class="profile-button">
+                <button id="historyButton" class="sidebar-button">
                     History
                 </button>
-                <button id="logoutBtn" class="profile-button logout-button">
+                <button id="logoutBtn" class="sidebar-button logout-button">
                     Logout
                 </button>
-                <button id="deleteBtn" class="profile-button logout-button">
+                <button id="deleteBtn" class="sidebar-button delete-button">
                     Delete Account
                 </button>
             </div>
+        </nav>
+        <div class="content-area">
+            <div class="welcome-container" id="welcomeContainer">
+                <div class="welcome-content">
+                    <h1>Welcome to Your Profile</h1>
+                    <p>Select an option from the sidebar to get started. You can view your statistics, edit your profile information, browse your history, or manage your account.</p>
+                </div>
+            </div>
+     
+            <div class="panel-content" id="panelContent" style="display: none;"></div>
         </div>
 
-        <div class="expanded-panel" id="expandedPanel">
+        <div class="expanded-panel" id="expandedPanel" style="display: none;">
             <button class="close-button" id="closePanel"></button>
-            <div class="panel-content" id="panelContent"></div>
+            <div class="panel-content-original" id="panelContentOriginal"></div>
         </div>
 
         <div class="overlay"></div>
     </main>
+
 
     <script src="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/js/profile.js"></script>
 </body>
