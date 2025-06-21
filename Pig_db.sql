@@ -1041,3 +1041,43 @@ FROM users u
 LEFT JOIN data_set d ON u.id = d.user_id
 GROUP BY u.id, u.username, u.email, u.role, u.created_at
 ORDER BY u.created_at DESC;
+
+CREATE OR REPLACE VIEW admin_users_dashboard AS
+SELECT 
+    u.id,
+    u.username,
+    u.email,
+    u.role,
+    u.created_at,
+    COUNT(d.id) as total_datasets,
+    COUNT(CASE WHEN d.type = 'number_array' THEN 1 END) as number_arrays,
+    COUNT(CASE WHEN d.type = 'character_array' THEN 1 END) as character_arrays,
+    COUNT(CASE WHEN d.type = 'matrix' THEN 1 END) as matrices,
+    COUNT(CASE WHEN d.type = 'graph' THEN 1 END) as graphs,
+    COUNT(CASE WHEN d.type = 'tree' THEN 1 END) as trees,
+    MAX(d.created_at) as last_dataset_created
+FROM users u
+LEFT JOIN data_set d ON u.id = d.user_id
+GROUP BY u.id, u.username, u.email, u.role, u.created_at
+ORDER BY u.created_at DESC;
+
+CREATE OR REPLACE PROCEDURE delete_user_complete(
+    p_user_id INTEGER
+) IS
+    v_dataset_count INTEGER;
+BEGIN
+    
+    SELECT COUNT(*) INTO v_dataset_count FROM data_set WHERE user_id = p_user_id;
+    
+
+    DELETE FROM number_array WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM character_array WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM matrix WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM graph WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM tree WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM data_set WHERE user_id = p_user_id;
+    DELETE FROM users WHERE id = p_user_id;
+    
+    COMMIT;
+END;
+/
