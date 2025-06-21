@@ -815,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const isConnected = document.getElementById('isConnected').checked;
         const isBipartite = document.getElementById('isBipartite').checked;
 
-        let visualizationActive = false;
+        visualizationActive = false;
 
         if (isNaN(n) || n < 1) {
             displayOutput('Please enter a valid number of vertices', true);
@@ -887,6 +887,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (representation === 'adjacency-matrix') {
             let matrix = Array.from({ length: n }, () => Array(n).fill(0));
             for (let [u, v, w] of edges) {
+                if (u >= n || v >= n) continue;
                 matrix[u][v] = (typeof w === "undefined" ? 1 : w);
                 if (type === 'undirected') matrix[v][u] = (typeof w === "undefined" ? 1 : w);
             }
