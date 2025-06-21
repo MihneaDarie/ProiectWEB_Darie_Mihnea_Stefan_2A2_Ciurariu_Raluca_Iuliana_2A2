@@ -114,12 +114,12 @@ class AdminDashboard {
 
         users.forEach(user => {
             const row = document.createElement('tr');
-            const username = user.username || 'N/A';
-            const email = user.email || 'N/A';
-            const role = user.role || 'user';
+            const username = escapeHTML(user.username || 'N/A');
+            const email = escapeHTML(user.email || 'N/A');
+            const role = escapeHTML(user.role || 'user');
             const datasets = user.total_datasets || 0;
             const joinDate = this.formatDate(user.created_at);
-            
+
             row.innerHTML = `
                 <td>
                     <div class="user-id">${user.id}</div>
@@ -147,11 +147,10 @@ class AdminDashboard {
             `;
             
             const deleteBtn = row.querySelector('.btn-delete');
-            
             deleteBtn.addEventListener('click', () => {
                 this.deleteUser(user.id, username);
             });
-            
+
             tbody.appendChild(row);
         });
     }
@@ -172,7 +171,7 @@ class AdminDashboard {
 
     deleteUser(userId, username) {
         this.showConfirmModal(
-            `Are you sure you want to delete user "${username}"? This action cannot be undone and will delete all their data.`,
+            `Are you sure you want to delete user "${escapeHTML(username)}"? This action cannot be undone and will delete all their data.`,
             () => this.confirmDeleteUser(userId)
         );
     }
@@ -240,6 +239,15 @@ class AdminDashboard {
             notification.remove();
         }, 4000);
     }
+}
+
+function escapeHTML(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 function closeConfirmModal() {
