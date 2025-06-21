@@ -8,19 +8,20 @@ class LoginModel extends Model{
 
     public function __construct($connection) {
         parent::__construct($connection);
-    
+            
         if(!isset($_ENV['JWT_SECRET'])) {
             $env = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
             $env->load();
         }
     }
+    
     public function login($username, $password){
 
         if (!$this->user_exists($username)) {
             return ["success" => false, "message" => "Username does not exist!"];
         }
 
-        $sql = "SELECT password FROM users WHERE username = :username";
+        $sql = "SELECT id, password, role FROM users WHERE username = :username";
         $stmt = oci_parse($this->connection, $sql);
         oci_bind_by_name($stmt, ":username", $username);
         oci_execute($stmt);
@@ -32,17 +33,21 @@ class LoginModel extends Model{
                 "aud" => "localhost",
                 "iat" => time(),
                 "exp" => time() + 3600,
-                "username" => $username
+                "username" => $username,
+                "role" => $row["ROLE"] ?? 'user',
+                "user_id" => $row["ID"]
             ];
 
             $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS256');
 
-            setcookie('jwt',$jwt,['expires'  => time() + 3600,'path' => '/', 'httponly' => true, 'samesite' => 'Lax']); //$jwt = $_COOKIE['token'] ?? null; (and use this whenever we want to get the token in requests)
+            setcookie('jwt',$jwt,['expires'  => time() + 3600,'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
 
             return [
                 "success" => true,
                 "message" => "Authentication successful!",
-                "token" => $jwt
+                "token" => $jwt,
+                "role" => $row["ROLE"] ?? 'user',
+                "redirect" => $row["ROLE"] === 'admin' ? 'admin' : 'generator'
             ];
         } else {
             return ["success" => false, "message" => "Incorrect password!"];

@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 $env = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $env->load();
 
@@ -7,7 +9,7 @@ require_once __DIR__ . '/Controllers/RegisterController.php';
 require_once __DIR__ . '/Controllers/LoginController.php';
 require_once __DIR__ . '/Controllers/GeneratorController.php';
 require_once __DIR__ . '/Controllers/ProfileController.php';
-
+require_once __DIR__ . '/Controllers/AdminController.php';
 
 header('Content-Type: application/json');
 
@@ -17,10 +19,34 @@ if (!$conn) {
     exit;
 }
 
+function checkAdminRole() {
+
+
+    $jwt = $_COOKIE['jwt'] ?? null;
+    if (!$jwt) {
+        echo json_encode(['success' => false, 'message' => 'Authentication required']);
+        exit;
+    }
+
+    try {
+        $payload = JWT::decode($jwt, new Key($_ENV['JWT_SECRET'], 'HS256'));
+        if (($payload->role ?? 'user') !== 'admin') {
+            echo json_encode(['success' => false, 'message' => 'Admin access required']);
+            exit;
+        }
+        return $payload;
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Invalid token']);
+        exit;
+    }
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 $page = $_GET['page'] ?? '';
+$action = $_GET['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
+// Login and Register routes
 if ($method === 'POST' && $page === 'register') {
     $username = $input['username'] ?? '';
     $password = $input['password'] ?? '';
@@ -40,10 +66,61 @@ if ($method === 'POST' && $page === 'login') {
     echo json_encode($response);
     exit;
 }
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $action = $_GET['action'] ?? '';
 
-    if($action=== 'getDataSet'){
+// Admin routes
+if ($page === 'admin') {
+    checkAdminRole(); // Verify admin access
+    $adminController = new AdminController($conn);
+    
+    if ($method === 'GET') {
+        switch ($action) {
+            case 'dashboard_stats':
+                $adminController->getDashboardStats();
+                exit;
+            case 'users':
+                $adminController->getAllUsers();
+                exit;
+            case 'user_details':
+                $adminController->getUserDetails();
+                exit;
+            case 'system_logs':
+                $adminController->getSystemLogs();
+                exit;
+            case 'data_distribution':
+                $adminController->getDataTypeDistribution();
+                exit;
+            default:
+                echo json_encode(['success' => false, 'message' => 'Admin action not found']);
+                exit;
+        }
+    }
+    
+    if ($method === 'POST') {
+        switch ($action) {
+            case 'update_role':
+                $adminController->updateUserRole();
+                exit;
+            default:
+                echo json_encode(['success' => false, 'message' => 'Admin action not found']);
+                exit;
+        }
+    }
+    
+    if ($method === 'DELETE') {
+        switch ($action) {
+            case 'delete_user':
+                $adminController->deleteUser();
+                exit;
+            default:
+                echo json_encode(['success' => false, 'message' => 'Admin action not found']);
+                exit;
+        }
+    }
+}
+
+// Existing routes
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if($action === 'getDataSet'){
         $ctrl = new ProfileController($conn);
         $ctrl->getDataSet();            
         exit;
@@ -55,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit;
     }
 
-    if($action  === 'history'){
+    if($action === 'history'){
         $ctrl = new ProfileController($conn);
         $ctrl->history();
         exit;
@@ -105,31 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 }
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_GET['action'] ?? '';
-    $page = $_GET['page'] ?? '';
-
-    if ($page === 'register') {
-        $username = $input['username'] ?? '';
-        $password = $input['password'] ?? '';
-        $copy_password = $input['copy_password'] ?? '';
-        $email = $input['email'] ?? '';
-        $registerController = new RegisterController($conn);
-        $response = $registerController->register_user($username, $password, $copy_password, $email);
-        echo json_encode($response);
-        exit;
-    }
-
-    if ($page === 'login') {
-        $username = $input['username'] ?? '';
-        $password = $input['password'] ?? '';
-        $loginController = new LoginController($conn);
-        $response = $loginController->apiLogin($username, $password);
-        echo json_encode($response);
-        exit;
-    }
-
     if ($action === 'updateProfile') {
         try {
             $ctrl = new ProfileController($conn);
@@ -185,8 +238,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($method === 'DELETE') {
-    $action = $_GET['action'] ?? '';
-
     if ($action === 'deleteAccount') {
         try {
             $ctrl = new ProfileController($conn);
