@@ -24,7 +24,8 @@ CREATE TABLE users (
     username VARCHAR2(50) UNIQUE NOT NULL,
     password VARCHAR2(255) NOT NULL,
     email VARCHAR2(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    role VARCHAR2(10) DEFAULT 'user' CHECK(role IN ('user', 'admin'))
 )
 /
 
@@ -45,7 +46,7 @@ create table data_set(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_data_set_id_users FOREIGN KEY (user_id) REFERENCES users(id)
 )
-
+/
 create table number_array(
     id INTEGER NOT NULL PRIMARY KEY,
     length INTEGER,
@@ -965,21 +966,21 @@ INSERT INTO users (username, password, email, created_at) VALUES ('raluca', '$2y
 INSERT INTO users (username, password, email, created_at) VALUES ('dan', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'matematix@example.com', SYSTIMESTAMP)
 /
 
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (1, 'number_array', 'temperaturi', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (1, 1, 'number_array', 'temperaturi', SYSTIMESTAMP)
 /
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (1, 'character_array', 'parola encryptata cu parola "parola"', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (2,1, 'character_array', 'parola encryptata cu parola "parola"', SYSTIMESTAMP)
 /
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (1, 'matrix', 'display', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (3,1, 'matrix', 'display', SYSTIMESTAMP)
 /
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (2, 'graph', 'prietenii de pe facebook', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (4,2, 'graph', 'prietenii de pe facebook', SYSTIMESTAMP)
 /
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (2, 'graph', 'prietenii de pe facebook directed', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (5,2, 'graph', 'prietenii de pe facebook directed', SYSTIMESTAMP)
 /
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (2, 'graph', 'prietenii de pe facebook weighted', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (6,2, 'graph', 'prietenii de pe facebook weighted', SYSTIMESTAMP)
 /
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (2, 'graph', 'prietenii de pe facebook adjacency list', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (7,2, 'graph', 'prietenii de pe facebook adjacency list', SYSTIMESTAMP)
 /
-INSERT INTO data_set (user_id, type, label, created_at) VALUES (2, 'tree', 'arborele genealogic', SYSTIMESTAMP)
+INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (8,2, 'tree', 'arborele genealogic', SYSTIMESTAMP)
 /
 
 INSERT INTO number_array (id, length, number_type, min_value, max_value, sorted, data) VALUES (1, 5, 'float', 10.5, 99.9, 'none', '[10.5, 45.2, 99.9, 23.1, 67.8]')
@@ -1015,8 +1016,6 @@ select * from graph;
 
 select * from tree;
 
-ALTER SESSION SET PLSCOPE_SETTINGS = 'IDENTIFIERS:NONE';
-
 
 UPDATE users SET role = 'user' WHERE role IS NULL;
 COMMIT;
@@ -1042,25 +1041,3 @@ FROM users u
 LEFT JOIN data_set d ON u.id = d.user_id
 GROUP BY u.id, u.username, u.email, u.role, u.created_at
 ORDER BY u.created_at DESC;
-
-CREATE OR REPLACE PROCEDURE delete_user_complete(
-    p_user_id INTEGER
-) IS
-    v_dataset_count INTEGER;
-BEGIN
-    
-    SELECT COUNT(*) INTO v_dataset_count FROM data_set WHERE user_id = p_user_id;
-    
-
-    DELETE FROM number_array WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
-    DELETE FROM character_array WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
-    DELETE FROM matrix WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
-    DELETE FROM graph WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
-    DELETE FROM tree WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
-    DELETE FROM data_set WHERE user_id = p_user_id;
-    DELETE FROM users WHERE id = p_user_id;
-    
-    COMMIT;
-END;
-/
-
