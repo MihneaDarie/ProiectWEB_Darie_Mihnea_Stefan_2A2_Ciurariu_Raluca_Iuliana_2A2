@@ -312,6 +312,7 @@ class ProfileManager {
         let dataSize = typeof safeData.DATA === 'string'
             ? safeData.DATA.length
             : JSON.stringify(safeData.DATA).length;
+
         const infoSection = document.createElement('div');
         infoSection.className = 'dataset-info-section';
         infoSection.style.setProperty('--type-color', this.getTypeColor(safeData.TYPE));
@@ -352,25 +353,17 @@ class ProfileManager {
 
         let isGraph = safeData.TYPE === 'graph';
         let vertexCount = 0;
-        let graphMeta = safeData.METADATA || {};
-        let graphData = safeData.DATA;
         let lastMode = 'text';
 
-        if (typeof graphData === 'string') {
+        let parsedData = safeData.DATA;
+        if (typeof parsedData === 'string') {
             try {
-                graphData = JSON.parse(graphData);
+                parsedData = JSON.parse(parsedData);
             } catch {
-                graphData = graphData
-                    .trim()
-                    .split('\n')
-                    .map(row => row.split(',').map(x => +x.trim()));
+                parsedData = safeData.DATA;
             }
         }
         if (isGraph) {
-            if (typeof graphMeta.vertices === 'number') vertexCount = graphMeta.vertices;
-            else if (Array.isArray(graphData)) vertexCount = graphData.length;
-            else vertexCount = 0;
-
             if (safeData.DESCRIPTION) {
                 const nodesMatch = safeData.DESCRIPTION.match(/Nodes:\s*(\d+)/i);
                 if (nodesMatch) {
@@ -378,7 +371,11 @@ class ProfileManager {
                 }
             }
 
-            if (vertexCount > 0 && vertexCount <= 10) {
+            if (vertexCount === 0 && Array.isArray(parsedData)) {
+                vertexCount = parsedData.length;
+            }
+
+            if (vertexCount > 0 && vertexCount <= 12) {
                 const visBtn = document.createElement('button');
                 visBtn.textContent = 'Visualize';
                 visBtn.className = 'visualize-graph-btn';
@@ -386,7 +383,11 @@ class ProfileManager {
 
                 visBtn.onclick = () => {
                     if (lastMode === 'text') {
-                        viewerWrapper.innerHTML = this.renderGraphSVG(graphData, safeData);
+                        if (isGraph) {
+                            viewerWrapper.innerHTML = this.renderGraphSVG(parsedData, safeData);
+                        } else if (isTree) {
+                            viewerWrapper.innerHTML = this.renderTreeSVG(parsedData, safeData);
+                        }
                         visBtn.textContent = 'Back';
                         lastMode = 'svg';
                     } else {
@@ -402,7 +403,10 @@ class ProfileManager {
             } else {
                 viewerWrapper.innerHTML = `<pre class="dataset-viewer">${this.formatParsedOutputSafe(safeData.TYPE, safeData.DATA)}</pre>`;
             }
+        } else {
+            viewerWrapper.innerHTML = `<pre class="dataset-viewer">${this.formatParsedOutputSafe(safeData.TYPE, safeData.DATA)}</pre>`;
         }
+
         contentSection.appendChild(viewerWrapper);
         detailContainer.appendChild(contentSection);
         contentArea.appendChild(detailContainer);
@@ -725,30 +729,60 @@ class ProfileManager {
 
 
             if (type === 'tree') {
-                let parent;
+                let parsed;
                 try {
-                    if (typeof rawData === 'string') {
-                        parent = JSON.parse(rawData);
-                    } else if (Array.isArray(rawData)) {
-                        parent = rawData;
-                    } else {
-                        parent = String(rawData).split(',').map(x => parseInt(x));
-                    }
-
-                    if (!Array.isArray(parent)) {
-                        parent = String(parent).split(',').map(x => parseInt(x));
-                    }
+                    parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
                 } catch {
-                    parent = String(rawData).replace(/[\[\]\s]/g, '').split(',').map(x => parseInt(x));
+                    parsed = rawData;
                 }
 
-                const nodes = parent.length;
-                return `<div class="output-item">
-                        <div class="tree-output">
-                    Node:&nbsp;&nbsp;${Array.from({ length: nodes }, (_, i) => String(i).padStart(3, ' ')).join(' ')}\n
-                    Parent:${parent.map(p => String(p).padStart(3, ' ')).join(' ')}
-                        </div>
-                    </div>`;
+                const htmlLines = [];
+                const pad = val => String(val).padStart(3, ' ');
+
+                if (parsed && typeof parsed === 'object' && 'parents' in parsed && 'weights' in parsed) {
+                    const { parents, weights } = parsed;
+                    const nodes = parents.length;
+                    htmlLines.push('Node:   ' + Array.from({ length: nodes }, (_, i) => pad(i)).join(' '));
+                    htmlLines.push('Parent: ' + parents.map(p => pad(p)).join(' '));
+                    htmlLines.push('Weight: ' + weights.map(w => pad(w)).join(' '));
+
+                } else if (
+                    Array.isArray(parsed) &&
+                    parsed.length &&
+                    typeof parsed[0] === 'object' &&
+                    Array.isArray(parsed[0]) &&
+                    parsed[0].length &&
+                    typeof parsed[0][0] === 'object' &&
+                    'node' in parsed[0][0] &&
+                    'weight' in parsed[0][0]
+                ) {
+                    parsed.forEach((neighbors, i) => {
+                        const formatted = neighbors.map(n => `${n.node}(${n.weight})`).join(', ');
+                        htmlLines.push(`${i}: ${formatted}`);
+                    });
+
+                } else if (
+                    Array.isArray(parsed) &&
+                    parsed.length &&
+                    Array.isArray(parsed[0]) &&
+                    parsed[0].every(cell => typeof cell === 'number')
+                ) {
+                    parsed.forEach(row => {
+                        htmlLines.push(row.map(pad).join(' '));
+                    });
+
+                } else if (Array.isArray(parsed)) {
+                    const nodes = parsed.length;
+                    htmlLines.push('Node:   ' + Array.from({ length: nodes }, (_, i) => pad(i)).join(' '));
+                    htmlLines.push('Parent: ' + parsed.map(pad).join(' '));
+
+                } else {
+                    htmlLines.push('Node:   ' + Array.from({ length: String(parsed).split(',').length }, (_, i) => pad(i)).join(' '));
+                    htmlLines.push('Parent: ' + String(parsed).split(',').map(p => pad(p)).join(' '));
+
+                }
+
+                return `<div class="output-item"><div class="tree-output">${htmlLines.join('\n')}</div></div>`;
             }
 
             const displayData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData, null, 2);
