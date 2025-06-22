@@ -9,7 +9,7 @@ html {
 }
 body, html {
     height: 100%;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:  Inter, system-ui, sans-serif;
     background: linear-gradient(-45deg,
         #8a2be2,
         #c197ef,
@@ -27,6 +27,8 @@ body, html {
     overflow-x: hidden;
     color: #1e293b;
     line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 @keyframes gradientShift {
     0% { background-position: 0% 50%; }
@@ -71,6 +73,8 @@ body, html {
     border-radius: 1rem;
     border: 1px solid #e2e8f0;
     transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease, position 0.3s ease;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .sidebar-header {
     padding: 0 0 2rem;
@@ -94,10 +98,10 @@ body, html {
         #74b3ce,
         #c197ef,
         #8a2be2);
+    background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
+    color: transparent;
     letter-spacing: -0.02em;
 }
 .sidebar-buttons {
@@ -228,10 +232,10 @@ body, html {
         #74b3ce,
         #c197ef,
         #8a2be2);
+    background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
+    color: transparent;
     letter-spacing: -0.02em;
 }
 .welcome-content p {
@@ -253,25 +257,8 @@ body, html {
     animation: slideInRight 0.4s ease-out;
     display: flex;
     flex-direction: column;
-}
-.panel-content::-webkit-scrollbar {
-    width: 8px;
-}
-.panel-content::-webkit-scrollbar-track {
-    background: rgba(248, 250, 252, 0.8);
-    border-radius: 0.5rem;
-    margin: 0.5rem 0;
-}
-.panel-content::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 0.5rem;
-    border: 1px solid #cbd5e1;
-    transition: all 0.3s ease;
-}
-.panel-content::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
-    border-color: #0ea5e9;
-    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 rgba(248, 250, 252, 0.8);
 }
 .panel-content::before {
     content: '';
@@ -454,7 +441,8 @@ body, html {
     border-bottom: 2px solid #e2e8f0;
     flex-wrap: wrap;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .history-tab {
     padding: 0.75rem 1.5rem;
@@ -488,6 +476,8 @@ body, html {
     padding-right: 0.25rem;
     min-height: 0;
     max-height: 75vh;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .history-list-container {
     display: grid;
@@ -710,6 +700,8 @@ body, html {
     outline: none;
     box-sizing: border-box;
     flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .delete-modal {
     position: fixed;
@@ -805,7 +797,9 @@ body, html {
     box-sizing: border-box;
     min-width: 0;
     flex: 1; 
-    min-height: 0; 
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .output-area:hover {
     border-color: #0ea5e9;
@@ -825,6 +819,8 @@ body, html {
     color: #1e293b;
     overflow: auto;
     word-wrap: break-word;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .output-item:hover {
     transform: translateY(-2px);
@@ -833,62 +829,6 @@ body, html {
 }
 .expanded-panel {
     display: none !important;
-}
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px; 
-}
-::-webkit-scrollbar-track {
-    background: #f8fafc;
-    border-radius: 0.25rem; 
-}
-::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 0.25rem; 
-    border: 1px solid #0ea5e9;
-    transition: background 0.3s;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
-    border-color: #0284c7;
-}
-.history-content-area::-webkit-scrollbar {
-    width: 5px; 
-}
-.history-content-area::-webkit-scrollbar-track {
-    background: #f8fafc;
-    border-radius: 0.25rem;
-}
-.history-content-area::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 0.25rem;
-    border: 1px solid #0ea5e9;
-    transition: background 0.3s;
-}
-.history-content-area::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
-    border-color: #0284c7;
-}
-.dataset-viewer::-webkit-scrollbar {
-    width: 6px; 
-    height: 6px; 
-}
-.dataset-viewer::-webkit-scrollbar-track {
-    background: #f8fafc;
-    border-radius: 0.25rem;
-}
-.dataset-viewer::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 0.25rem;
-    border: 1px solid #0ea5e9;
-    transition: background 0.3s;
-}
-.dataset-viewer::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
-    border-color: #0284c7;
-}
-.dataset-viewer::-webkit-scrollbar-corner {
-    background: #f8fafc;
 }
 .hidden-username {
     position: absolute;
@@ -1047,6 +987,8 @@ body, html {
     display: block;         
     min-width: 0;
     font-size: clamp(0.75rem, 1.1vw, 0.875rem);
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .tree-output {
     white-space: pre;
@@ -1059,6 +1001,8 @@ body, html {
     display: inline-block;
     min-width: 0;
     font-size: clamp(0.75rem, 1.1vw, 0.875rem);
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .number-array-output,
 .character-array-output,
@@ -1074,6 +1018,8 @@ body, html {
     font-family: monospace;
     line-height: 1.6;
     font-size: clamp(0.75rem, 1.1vw, 0.875rem);
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .error-message {
     background: #fef2f2 !important;
@@ -1097,6 +1043,8 @@ body, html {
     border-radius: 0.5rem;
     margin-bottom: 16px;
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
 }
 .graph-visualization svg {
     border: 1px solid #e5e7eb;
@@ -1105,7 +1053,6 @@ body, html {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transform: none !important;
     filter: none !important;
-    -webkit-filter: none !important;
     opacity: 1 !important;
     max-width: 100%;
     height: auto;
@@ -1118,7 +1065,6 @@ body, html {
     transform: none !important;
     filter: none !important;
     box-shadow: none !important;
-    -webkit-filter: none !important;
     opacity: 1 !important;
     position: relative !important;
 }
@@ -1215,10 +1161,6 @@ body, html {
         padding-bottom: 1rem;
         gap: 0.5rem;
         scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    .history-tabs::-webkit-scrollbar {
-        display: none;
     }
     .history-tab {
         flex-shrink: 0;
@@ -1459,7 +1401,7 @@ body, html {
     .sidebar {
         display: none;
     }
-        .content-area {
+    .content-area {
         margin-left: 0;
         width: 100%;
     }

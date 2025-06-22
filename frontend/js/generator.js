@@ -386,15 +386,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     filename = `graph_${graphType}_${representation}_${weightInfo}_${timestamp}.csv`;
 
                     if (representation === 'edge-list') {
-                        if (isWeighted) {
-                            csvContent = 'Source,Target,Weight\n';
-                        } else {
-                            csvContent = 'Source,Target\n';
-                        }
                         csvContent += currentGeneratedData.map(edge => edge.join(',')).join('\n');
                     } else if (representation === 'adjacency-matrix') {
                         const vertices = currentGraphMetadata.vertices;
-                        csvContent = 'Node,' + Array.from({ length: vertices }, (_, i) => i).join(',') + '\n';
                         currentGeneratedData.forEach((row, i) => {
                             csvContent += `${i},` + row.join(',') + '\n';
                         });
@@ -424,13 +418,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (treeRepresentation === 'parent-list') {
                     if (isWeightedTree && currentGeneratedData.parents) {
-                        csvContent = 'Node,Parent,Weight\n';
                         currentGeneratedData.parents.forEach((parent, node) => {
                             const weight = currentGeneratedData.weights[node];
                             csvContent += `${node},${parent},${weight}\n`;
                         });
                     } else {
-                        csvContent = 'Node,Parent\n';
                         const parentArray = Array.isArray(currentGeneratedData) ? currentGeneratedData : currentGeneratedData.parents;
                         parentArray.forEach((parent, node) => {
                             csvContent += `${node},${parent}\n`;
@@ -438,7 +430,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 } else if (treeRepresentation === 'adjacency-matrix') {
                     const nodes = currentGeneratedData.length;
-                    csvContent = 'Node,' + Array.from({ length: nodes }, (_, i) => i).join(',') + '\n';
                     currentGeneratedData.forEach((row, i) => {
                         csvContent += `${i},` + row.join(',') + '\n';
                     });
