@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
         email.classList.remove("invalid");
 
         username.placeholder = "Username";
-        firstpassword.placeholder = "Parola";
-        secondpassword.placeholder = "Reintroduceti parola";
+        firstpassword.placeholder = "Password";
+        secondpassword.placeholder = "Confirm Password";
         email.placeholder = "Email";
     };
     const createMessage = (text, color, isSubMessage = false) => {

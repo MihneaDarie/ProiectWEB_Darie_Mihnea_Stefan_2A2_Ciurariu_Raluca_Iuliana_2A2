@@ -1,5 +1,3 @@
-drop table users cascade constraints
-/
 drop table data_set cascade CONSTRAINTS
 /
 drop table number_array CASCADE CONSTRAINTS
@@ -46,6 +44,7 @@ create table data_set(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_data_set_id_users FOREIGN KEY (user_id) REFERENCES users(id)
 )
+/
 /
 create table number_array(
     id INTEGER NOT NULL PRIMARY KEY,
@@ -966,7 +965,7 @@ INSERT INTO users (username, password, email, created_at) VALUES ('raluca', '$2y
 INSERT INTO users (username, password, email, created_at) VALUES ('dan', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'matematix@example.com', SYSTIMESTAMP)
 /
 
-INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (1, 1, 'number_array', 'temperaturi', SYSTIMESTAMP)
+INSERT INTO data_set (id,id,user_id, type, label, created_at) VALUES (1,1, 1, 'number_array', 'temperaturi', SYSTIMESTAMP)
 /
 INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (2,1, 'character_array', 'parola encryptata cu parola "parola"', SYSTIMESTAMP)
 /
@@ -1015,6 +1014,13 @@ select * from matrix;
 select * from graph;
 
 select * from tree;
+
+ALTER SESSION SET PLSCOPE_SETTINGS = 'IDENTIFIERS:NONE';
+
+
+
+
+
 
 
 UPDATE users SET role = 'user' WHERE role IS NULL;

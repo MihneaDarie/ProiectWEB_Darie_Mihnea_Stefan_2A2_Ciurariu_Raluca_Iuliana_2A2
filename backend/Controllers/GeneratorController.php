@@ -10,7 +10,7 @@ class GeneratorController extends Controller {
         $this->generatorModel = new GeneratorModel($connection);
     }
 
-        public function handleRequest($type, $data, $params = []) {
+    public function handleRequest($type, $data, $params = []) {
         if (empty($type)) {
             return [
                 'success' => false,
@@ -18,7 +18,7 @@ class GeneratorController extends Controller {
             ];
         }
 
-        $input = [
+        $allParams = [
             'type' => $type,
             'array' => $data,
             'length' => $params['length'] ?? null,
@@ -27,10 +27,16 @@ class GeneratorController extends Controller {
             'sortOrder' => $params['sortOrder'] ?? null,
             'rows' => $params['rows'] ?? null,
             'cols' => $params['cols'] ?? null,
-            'charSet' => $params['charSet'] ?? null
+            'charSet' => $params['charSet'] ?? null,
+            'vertices' => $params['vertices'] ?? null,
+            'edges' => $params['edges'] ?? null,
+            'graphType' => $params['graphType'] ?? null,
+            'representation' => $params['representation'] ?? null,
+            'nodes' => $params['nodes'] ?? null,
+            'isWeighted' => $params['isWeighted'] ?? 'n'
         ];
 
-        if (!$this->validateInput($input)) {
+        if (!$this->validateInput($allParams)) {
             return [
                 'success' => false,
                 'message' => 'Invalid input data'
@@ -41,7 +47,7 @@ class GeneratorController extends Controller {
             $result = $this->generatorModel->insert_data_set(
                 $type,
                 $data,
-                $params
+                $allParams
             );
 
             return $result;
@@ -77,9 +83,18 @@ class GeneratorController extends Controller {
                     is_array($input['array']);
             
             case 'graph':
+                return isset($input['array']) &&
+                    is_array($input['array']) &&
+                    isset($input['vertices']) &&
+                    isset($input['edges']) &&
+                    isset($input['graphType']) &&
+                    isset($input['representation']);
+            
             case 'tree':
                 return isset($input['array']) &&
-                    is_array($input['array']);
+                    (is_array($input['array']) || is_string($input['array'])) &&
+                    isset($input['nodes']) &&
+                    isset($input['representation']);
             
             default:
                 return false;

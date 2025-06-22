@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Generator</title>
-    <link rel="stylesheet" href="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/templates/generator.css" />
+    <link rel="stylesheet" href="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/templates/generator.css" >
     <script src="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/js/generator.js"></script>
 </head>
 <body>
@@ -84,11 +84,15 @@
                         <label for="numCols">Number of Columns</label>
                         <input type="number" id="numCols" name="numCols" min="1" placeholder="e.g. 3">
                     </div>
-                    <div class="control-item">
+                    <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isMap" name="isMap">
+                        <label for="isMap">Generate as Map (0 = water, 1 = land)</label>
+                    </div>
+                    <div class="control-item" id="minMaxControls">
                         <label for="minMatrixValue">Minimum Value</label>
                         <input type="number" id="minMatrixValue" name="minMatrixValue" placeholder="e.g. 0">
                     </div>
-                    <div class="control-item">
+                    <div class="control-item" id="maxMaxControls">
                         <label for="maxMatrixValue">Maximum Value</label>
                         <input type="number" id="maxMatrixValue" name="maxMatrixValue" placeholder="e.g. 9">
                     </div>
@@ -98,6 +102,14 @@
     
                 <div class="control-panel graphs-controls" style="display: none;">
                     <h3>Graph Generator</h3>
+                    <div class="control-item">
+                        <label for="graphRepresentation">Graph Representation</label>
+                        <select id="graphRepresentation" name="graphRepresentation">
+                            <option value="adjacency-matrix" selected>Adjacency Matrix</option>
+                            <option value="adjacency-list">Adjacency List</option>
+                            <option value="edge-list">Edge List</option>
+                        </select>
+                    </div>
                     <div class="control-item">
                         <label for="numVertices">Number of Vertices</label>
                         <input type="number" id="numVertices" name="numVertices" min="1" placeholder="e.g. 4">
@@ -113,14 +125,38 @@
                             <option value="directed">Directed</option>
                         </select>
                     </div>
+                    <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isWeightedGraph" name="isWeightedGraph">
+                        <label for="isWeightedGraph">Generate Weighted Graph</label>
+                    </div>
+                    <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isConnected" name="isConnected">
+                        <label for="isConnected">Generate Connected Graph</label>
+                    </div>
+                    <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isBipartite" name="isBipartite">
+                        <label for="isBipartite">Generate Bipartite Graph</label>
+                    </div>
                     <button id="generateGraph">Generate Graph</button>
                 </div>
 
                 <div class="control-panel tree-controls" style="display: none;">
                     <h3>Tree Generator</h3>
+                     <div class="control-item">
+                        <label for="treeRepresentation">Tree Representation</label>
+                        <select id="treeRepresentation" name="treeRepresentation">
+                            <option value="adjacency-matrix" selected>Adjacency Matrix</option>
+                            <option value="adjacency-list">Adjacency List</option>
+                            <option value="parent-list">Parent List</option>
+                        </select>
+                    </div>
                     <div class="control-item">
                         <label for="numNodes">Number of Nodes</label>
                         <input type="number" id="numNodes" name="numNodes" min="1" placeholder="e.g. 5">
+                    </div>
+                     <div class="control-item checkbox-item">
+                        <input type="checkbox" id="isWeightedTree" name="isWeightedTree">
+                        <label for="isWeightedTree">Generate Weighted Tree</label>
                     </div>
                     <button id="generateTree">Generate Tree</button>
                 </div>
@@ -133,7 +169,7 @@
                     <h2>Output</h2>
                     <div class="output-buttons">
                     <button class="clear-button" id="clearOutput" style="display: none;">Clear</button>
-                     <button class="copy-button" id="copyOutput" style="display: none;" title="Copy">
+                    <button class="copy-button" id="copyOutput" style="display: none;" title="Copy">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                                 <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
