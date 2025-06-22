@@ -22,7 +22,8 @@ CREATE TABLE users (
     username VARCHAR2(50) UNIQUE NOT NULL,
     password VARCHAR2(255) NOT NULL,
     email VARCHAR2(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    role VARCHAR2(10) DEFAULT 'user' CHECK(role IN ('user', 'admin'))
 )
 /
 
@@ -43,6 +44,7 @@ create table data_set(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_data_set_id_users FOREIGN KEY (user_id) REFERENCES users(id)
 )
+/
 /
 create table number_array(
     id INTEGER NOT NULL PRIMARY KEY,
@@ -963,7 +965,7 @@ INSERT INTO users (username, password, email, created_at) VALUES ('raluca', '$2y
 INSERT INTO users (username, password, email, created_at) VALUES ('dan', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.OG.VMFL6d8mZV1E6', 'matematix@example.com', SYSTIMESTAMP)
 /
 
-INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (1,1, 'number_array', 'temperaturi', SYSTIMESTAMP)
+INSERT INTO data_set (id,id,user_id, type, label, created_at) VALUES (1,1, 1, 'number_array', 'temperaturi', SYSTIMESTAMP)
 /
 INSERT INTO data_set (id,user_id, type, label, created_at) VALUES (2,1, 'character_array', 'parola encryptata cu parola "parola"', SYSTIMESTAMP)
 /
@@ -1018,3 +1020,70 @@ ALTER SESSION SET PLSCOPE_SETTINGS = 'IDENTIFIERS:NONE';
 
 
 
+
+
+
+UPDATE users SET role = 'user' WHERE role IS NULL;
+COMMIT;
+
+Insert into users (ID,USERNAME,PASSWORD,EMAIL,CREATED_AT,ROLE) values (7,'admin','$2y$10$hR.9kECTx0qlFUQTkFqXDuTZR6iUEZ0rqMVmyuRsh6ADwe94re692','admin',to_timestamp('16-JUN-25 01.16.16.118000000 AM','DD-MON-RR HH.MI.SSXFF AM'),'admin');
+
+
+CREATE OR REPLACE VIEW admin_users_dashboard AS
+SELECT 
+    u.id,
+    u.username,
+    u.email,
+    u.role,
+    u.created_at,
+    COUNT(d.id) as total_datasets,
+    COUNT(CASE WHEN d.type = 'number_array' THEN 1 END) as number_arrays,
+    COUNT(CASE WHEN d.type = 'character_array' THEN 1 END) as character_arrays,
+    COUNT(CASE WHEN d.type = 'matrix' THEN 1 END) as matrices,
+    COUNT(CASE WHEN d.type = 'graph' THEN 1 END) as graphs,
+    COUNT(CASE WHEN d.type = 'tree' THEN 1 END) as trees,
+    MAX(d.created_at) as last_dataset_created
+FROM users u
+LEFT JOIN data_set d ON u.id = d.user_id
+GROUP BY u.id, u.username, u.email, u.role, u.created_at
+ORDER BY u.created_at DESC;
+
+CREATE OR REPLACE VIEW admin_users_dashboard AS
+SELECT 
+    u.id,
+    u.username,
+    u.email,
+    u.role,
+    u.created_at,
+    COUNT(d.id) as total_datasets,
+    COUNT(CASE WHEN d.type = 'number_array' THEN 1 END) as number_arrays,
+    COUNT(CASE WHEN d.type = 'character_array' THEN 1 END) as character_arrays,
+    COUNT(CASE WHEN d.type = 'matrix' THEN 1 END) as matrices,
+    COUNT(CASE WHEN d.type = 'graph' THEN 1 END) as graphs,
+    COUNT(CASE WHEN d.type = 'tree' THEN 1 END) as trees,
+    MAX(d.created_at) as last_dataset_created
+FROM users u
+LEFT JOIN data_set d ON u.id = d.user_id
+GROUP BY u.id, u.username, u.email, u.role, u.created_at
+ORDER BY u.created_at DESC;
+
+CREATE OR REPLACE PROCEDURE delete_user_complete(
+    p_user_id INTEGER
+) IS
+    v_dataset_count INTEGER;
+BEGIN
+    
+    SELECT COUNT(*) INTO v_dataset_count FROM data_set WHERE user_id = p_user_id;
+    
+
+    DELETE FROM number_array WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM character_array WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM matrix WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM graph WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM tree WHERE id IN (SELECT id FROM data_set WHERE user_id = p_user_id);
+    DELETE FROM data_set WHERE user_id = p_user_id;
+    DELETE FROM users WHERE id = p_user_id;
+    
+    COMMIT;
+END;
+/
