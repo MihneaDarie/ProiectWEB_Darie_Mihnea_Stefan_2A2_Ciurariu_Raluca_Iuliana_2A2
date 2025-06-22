@@ -46,7 +46,6 @@ $page = $_GET['page'] ?? '';
 $action = $_GET['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-// Login and Register routes
 if ($method === 'POST' && $page === 'register') {
     $username = $input['username'] ?? '';
     $password = $input['password'] ?? '';
@@ -67,9 +66,8 @@ if ($method === 'POST' && $page === 'login') {
     exit;
 }
 
-// Admin routes
 if ($page === 'admin') {
-    checkAdminRole(); // Verify admin access
+    checkAdminRole();
     $adminController = new AdminController($conn);
     
     if ($method === 'GET') {
@@ -118,7 +116,6 @@ if ($page === 'admin') {
     }
 }
 
-// Existing routes
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if($action === 'getDataSet'){
         $ctrl = new ProfileController($conn);

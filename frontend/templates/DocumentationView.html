@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Documentation - Data Generation Platform</title>
+    <link rel="stylesheet" href="/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/frontend/templates/auth.css">
+</head>
+<body>
+  <div id="doc-root">
+    <div class="doc-header-panel">
+        <h1>Data Generation Platform</h1>
+        <div class="author">Darie Mihnea Stefan &amp; Ciurariu Raluca Iuliana</div>
+        <div class="date">Group 2A2</div>
+    </div>
+    <div class="doc-scroll-wrapper">
+        <div class="doc-content">
+            <section id="abstract">
+                <h2>Abstract</h2>
+                <p>This project represents a comprehensive web platform for generating, visualizing and managing datasets of various types including numeric arrays, character arrays, matrices, graphs and trees. The system integrates a modern JavaScript frontend with a PHP backend and Oracle database, providing authentication, data operation and administration functionalities.</p>
+            </section>
+            <section id="introduction">
+                <h2>1. Introduction</h2>
+                <p>The Data Generation Platform addresses the need for a centralized system to create and manage structured datasets. The platform emphasizes secure data processing and visualization, ensuring data integrity and preventing misinterpretation.</p>
+                
+                <h3>1.1 Project Objectives</h3>
+                <ul>
+                    <li>Provide a user-friendly interface for dataset generation and management</li>
+                    <li>Implement secure authentication and role-based access control</li>
+                    <li>Ensure reliable data processing and visualization</li>
+                    <li>Maintain data integrity through robust validation</li>
+                    <li>Offer extensibility for future data types</li>
+                </ul>
+            </section>
+
+            <section id="architecture">
+                <h2>2. System Architecture</h2>
+                
+                <h3>2.1 Frontend Components</h3>
+                <ul>
+                    <li><strong>JavaScript:</strong> Primary files in <code>frontend/js/</code> including:
+                        <ul>
+                            <li><code>profile.js</code> - User profile and dataset management</li>
+                            <li><code>generator.js</code> - Dataset generation interface</li>
+                            <li><code>register.js</code> - User registration and validation</li>
+                            <li><code>admin.js</code> - Administration panel</li>
+                        </ul>
+                    </li>
+                    <li><strong>HTML/CSS:</strong> Responsive interface design</li>
+                </ul>
+                
+                <h3>2.2 Backend Components</h3>
+                <ul>
+                    <li><strong>PHP:</strong> Core files in <code>backend/Models/</code>:
+                        <ul>
+                            <li><code>GeneratorModel.php</code> - Dataset generation logic</li>
+                            <li><code>ProfileModel.php</code> - User profile operations</li>
+                            <li><code>index.php</code> - Main entry point</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <h3>2.3 Database</h3>
+                <ul>
+                    <li><strong>Oracle Database:</strong> Schema defined in <code>Pig_db.sql</code></li>
+                    <li>Stored procedures for data validation and processing</li>
+                    <li>CLOB/JSON support for complex data types</li>
+                </ul>
+            </section>
+
+            <section id="features">
+                <h2>3. Core Features</h2>
+                
+                <h3>3.1 User Authentication & Registration</h3>
+                <ul>
+                    <li>Form validation in <code>register.js</code></li>
+                    <li>Secure login/logout functionality</li>
+                    <li>Role-based access (user/admin)</li>
+                </ul>
+                
+                <h3>3.2 Data Generation</h3>
+                <p>Supported dataset types:</p>
+                <ul>
+                    <li><strong>Numeric Array</strong> (<code>number_array</code>)</li>
+                    <li><strong>Character Array</strong> (<code>character_array</code>)</li>
+                    <li><strong>Matrix</strong> (<code>matrix</code>)</li>
+                    <li><strong>Graph</strong> (<code>graph</code>)</li>
+                    <li><strong>Tree</strong> (<code>tree</code>)</li>
+                </ul>
+                
+                <h3>3.3 Dataset History & Filtering</h3>
+                <ul>
+                    <li>User-specific dataset history</li>
+                    <li>Advanced filtering by dataset type</li>
+                    <li>Detailed metadata display</li>
+                </ul>
+            </section>
+
+            <section id="semantics-overlay">
+                <h2>4. Semantics Overlay</h2>
+                <p>The "Semantics Overlay" represents our approach to secure data processing and visualization, preventing misinterpretation or incorrect display of data.</p>
+                
+                <div class="important">
+                    <h3>Key Implementation</h3>
+                    <p>The <code>formatParsedOutputSafe(type, rawData)</code> function in <code>frontend/js/profile.js</code> is central to this approach:</p>
+                    <ul>
+                        <li>Normalizes and protects data during display (HTML escaping, type validation)</li>
+                        <li>Implements JSON parsing with fallbacks for invalid data</li>
+                        <li>Provides clear error messages for corrupted or missing data</li>
+                        <li>Maintains clear separation between data types</li>
+                    </ul>
+                </div>
+                
+                <h3>4.1 Backend Processing</h3>
+                <p>Backend components (<code>GeneratorModel.php</code> and SQL procedures in <code>Pig_db.sql</code>) ensure:</p>
+                <ul>
+                    <li>Consistent data storage</li>
+                    <li>CLOB/JSON handling</li>
+                    <li>Format validation during read/write operations</li>
+                </ul>
+                
+                <h3>4.2 Importance</h3>
+                <ul>
+                    <li>Prevents code injection or interface corruption</li>
+                    <li>Provides users with clear, secure feedback</li>
+                    <li>Facilitates easy extension with new data types</li>
+                </ul>
+            </section>
+
+            <section id="technical-details">
+                <h2>5. Technical Implementation</h2>
+                
+                <h3>5.1 Backend PHP + Oracle</h3>
+                <ul>
+                    <li>Communication via stored procedures</li>
+                    <li>Parameter validation</li>
+                    <li>CLOB manipulation for complex data</li>
+                </ul>
+                
+                <h3>5.2 Frontend JavaScript</h3>
+                <ul>
+                    <li>Modern patterns (async/await)</li>
+                    <li><code>ProfileManager</code> class for state management</li>
+                    <li>Dynamic DOM updates and filtering</li>
+                </ul>
+                
+                <h3>5.3 Security & Access</h3>
+                <ul>
+                    <li>Protected pages (<code>generator</code>, <code>profile</code>, <code>admin</code>)</li>
+                    <li>Authentication required for sensitive operations</li>
+                    <li>Administrator role for privileged actions</li>
+                </ul>
+            </section>
+
+            <section id="database">
+                <h2>6. Database Structure</h2>
+                
+                <h3>6.1 Main Tables</h3>
+                <ul>
+                    <li><code>data_set</code> - Core dataset information</li>
+                    <li><code>number_array</code> - Numeric array data</li>
+                    <li><code>character_array</code> - Character array data</li>
+                    <li><code>matrix</code> - Matrix data</li>
+                    <li><code>graph</code> - Graph data</li>
+                    <li><code>tree</code> - Tree data</li>
+                </ul>
+                
+                <h3>6.2 Procedures</h3>
+                <ul>
+                    <li>Data processing and validation</li>
+                    <li>JSON/CLOB insertion and retrieval</li>
+                </ul>
+            </section>
+
+            <section id="administration">
+                <h2>7. Administration</h2>
+                <ul>
+                    <li>Administrator dashboard</li>
+                    <li>Secure logout mechanism</li>
+                    <li>User and data management</li>
+                </ul>
+            </section>
+
+            <section id="usage">
+                <h2>8. Usage Guide</h2>
+                <ol>
+                    <li>Register an account or log in</li>
+                    <li>Access the generator to create new datasets</li>
+                    <li>View history and statistics in your profile</li>
+                    <li>(Admin only) Access the administration panel for extended management</li>
+                </ol>
+            </section>
+
+            <section id="extensibility">
+                <h2>9. Extensibility</h2>
+                <p>The architecture allows for easy addition of new data types or features through:</p>
+                <ul>
+                    <li>Component separation</li>
+                    <li>Secure data handling ("Semantics Overlay")</li>
+                    <li>Modular design patterns</li>
+                </ul>
+            </section>
+
+            <section id="resources">
+                <h2>10. Resources</h2>
+                <ul>
+                    <li><strong>Source Code:</strong> <a href="https://github.com/MihneaDarie/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2">GitHub Repository</a></li>
+                    <li><strong>Database Script:</strong> <a href="https://github.com/MihneaDarie/ProiectWEB_Darie_Mihnea_Stefan_2A2_Ciurariu_Raluca_Iuliana_2A2/blob/main/Pig_db.sql">Pig_db.sql</a></li>
+                    <li><strong>Frontend JS:</strong> <code>frontend/js/profile.js</code>, <code>generator.js</code>, <code>register.js</code>, <code>admin.js</code></li>
+                    <li><strong>Backend PHP:</strong> <code>backend/Models/GeneratorModel.php</code>, <code>ProfileModel.php</code>, <code>index.php</code></li>
+                </ul>
+            </section>
+
+            <section id="conclusion">
+                <h2>11. Final Notes</h2>
+                <div class="note">
+                    <p>For any modifications to the processing/display logic, verify the <code>formatParsedOutputSafe</code> functions and maintain consistency between frontend and backend components.</p>
+                    <p>Always follow data validation and escaping practices to maintain application security.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="doc-footer-panel">
+        <footer>
+            <p>Data Generation Platform - Academic Project</p>
+            <p>&copy; 2023 Darie Mihnea Stefan & Ciurariu Raluca Iuliana</p>
+        </footer>
+    </div>
+  </div>
+</body>
+</html>
