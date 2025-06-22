@@ -11,7 +11,7 @@ Acest proiect reprezintă o platformă web pentru generarea, vizualizarea și ge
 - **Frontend**: JavaScript (fisiere principale `frontend/js/{profile.js, generator.js, register.js, admin.js}`), HTML, CSS
 - **Backend**: PHP (`backend/Models/GeneratorModel.php`, `backend/Models/ProfileModel.php`, `backend/index.php`)
 - **Baza de date**: Oracle, script SQL (`Pig_db.sql`)
-
+**https://www.youtube.com/watch?v=RWi3UOF_6oo**
 ---
 
 ## Funcționalități principale
