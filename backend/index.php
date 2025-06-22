@@ -86,8 +86,11 @@ try {
             renderTemplate('ProfileView.html');
             break;
         case 'admin':
-            checkAdminAccess(); // Only admins can access
+            checkAdminAccess();
             renderTemplate('AdminView.html');
+            break;
+        case 'doc':
+            renderTemplate('DocumentationView.html');
             break;
         default:
             echo '404 - Pagina nu a fost găsită';
