@@ -2,7 +2,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent page scroll */
+    overflow: hidden;
 }
 
 body, html {
@@ -224,7 +224,7 @@ input.invalid::placeholder {
 }
 .doc-footer-panel {
     max-width: 950px;
-    margin: 8px auto 16px auto; /* was 32px auto 32px auto */
+    margin: 8px auto 16px auto;
     background: rgba(255,255,255,0.98);
     border-radius: 14px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.10);
