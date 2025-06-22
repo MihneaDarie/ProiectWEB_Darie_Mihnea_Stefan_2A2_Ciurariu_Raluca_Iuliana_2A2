@@ -728,8 +728,17 @@ class ProfileManager {
                     (arr[0].length === 2 || arr[0].length === 3) &&
                     arr.every(row => Array.isArray(row) && row.length >= 2 && row.length <= 3)
                 ) {
+                    let i = 0;
                     arr.forEach(edge => {
-                        html += edge.join(', ') + '\n';
+                        html += `${i}: `;
+                        html += edge.map(val =>
+                            typeof val === 'object' && val !== null
+                                ? (val.node !== undefined && val.weight !== undefined
+                                    ? `${val.node}(${val.weight})`
+                                    : JSON.stringify(val))
+                                : String(val)
+                        ).join(', ') + '\n';
+                        i++;
                     });
                 } else if (
                     Array.isArray(arr) &&
