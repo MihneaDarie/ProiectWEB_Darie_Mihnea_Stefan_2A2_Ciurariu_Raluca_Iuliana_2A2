@@ -485,14 +485,23 @@ class ProfileManager {
         }
 
         if (!representation || representation === 'adjacency_list') {
-            if (Array.isArray(graphData) && graphData.length > 0) {
-                if (Array.isArray(graphData[0]) && typeof graphData[0][0] === 'number') {
-                    representation = 'adjacency_matrix';
-                } else if (Array.isArray(graphData[0]) && Array.isArray(graphData[0][0])) {
-                    representation = 'edge_list';
-                } else {
-                    representation = 'adjacency_list';
-                }
+            if (
+                Array.isArray(graphData) &&
+                graphData.length > 0 &&
+                Array.isArray(graphData[0]) &&
+                graphData.length === graphData[0].length &&
+                graphData.every(row => Array.isArray(row) && row.length === graphData.length && row.every(cell => typeof cell === 'number'))
+            ) {
+                representation = 'adjacency_matrix';
+            } else if (
+                Array.isArray(graphData) &&
+                graphData.length > 0 &&
+                Array.isArray(graphData[0]) &&
+                Array.isArray(graphData[0][0])
+            ) {
+                representation = 'edge_list';
+            } else {
+                representation = 'adjacency_list';
             }
         }
 
@@ -504,7 +513,7 @@ class ProfileManager {
 
         if (representation === 'edge_list') {
             console.log('Processing edge_list representation');
-
+            console.log("HERE");
             for (let edge of graphData) {
                 if (!Array.isArray(edge) || edge.length < 2) {
                     console.warn('Invalid edge format:', edge);
