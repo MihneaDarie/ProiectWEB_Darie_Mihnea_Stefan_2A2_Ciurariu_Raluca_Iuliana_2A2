@@ -623,6 +623,10 @@ button.loading::after {
     .output-area {
         max-height: 50vh;
     }
+    .graph-visualization svg {
+        max-height: 45vh !important;
+        max-width: calc(100vw - 4rem);
+    }
 }
 @media (max-width: 768px) {
     .generation-container {
@@ -649,7 +653,43 @@ button.loading::after {
         font-size: 0.875rem; 
         max-height: 300px; 
     }
+    .graph-visualization {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .graph-visualization svg {
+        max-height: 40vh !important;
+        max-width: calc(100vw - 5rem);
+        min-height: 200px;
+    }
 }
+
+@media (max-width: 480px) {
+    .graph-visualization {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .graph-visualization svg {
+        max-height: 35vh !important;
+        max-width: calc(100vw - 4rem);
+        min-height: 180px;
+    }
+}
+
+@media (max-width: 360px) {
+    .graph-visualization {
+        padding: 0.5rem;
+    }
+    
+    .graph-visualization svg {
+        max-height: 30vh !important;
+        max-width: calc(100vw - 3rem);
+        min-height: 150px;
+    }
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
